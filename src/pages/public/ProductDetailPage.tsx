@@ -1,11 +1,11 @@
-import { useParams, Link } from "react-router-dom";
-import { useFetch } from "@/hooks/useFetch";
-import { productService } from "@/services/productService";
+import {useParams, Link} from "react-router-dom";
+import {useFetch} from "@/hooks/useFetch";
+import {productService} from "@/services/productService";
 
-import { TrustBadge } from "@/components/common/TrustBadge";
-import { ReviewSection } from "@/components/common/ReviewSection";
+import {TrustBadge} from "@/components/common/TrustBadge";
+import {ReviewSection} from "@/components/common/ReviewSection";
 
-import { formatCurrency, formatDate } from "@/lib/utils";
+import {formatCurrency, formatDate} from "@/lib/utils";
 
 import {
     MapPin,
@@ -14,11 +14,11 @@ import {
     Calendar,
 } from "lucide-react";
 
-import { useState } from "react";
-import { useCart } from "@/hooks/useCart";
+import {useState} from "react";
+import {useCart} from "@/hooks/useCart";
 
 export default function ProductDetailPage() {
-    const { id } = useParams();
+    const {id} = useParams();
 
     const [qty, setQty] = useState(1);
     const [adding, setAdding] = useState(false);
@@ -27,7 +27,7 @@ export default function ProductDetailPage() {
 
     const productId = Number(id);
 
-    const { addItem } = useCart();
+    const {addItem} = useCart();
 
     const {
         data: product,
@@ -55,7 +55,6 @@ export default function ProductDetailPage() {
 
     const batch = product.currentBatch;
 
-    // Số lượng còn lại trong kho
     const remaining = batch?.quantity ?? 0;
 
     const handleAddToCart = async () => {
@@ -83,14 +82,11 @@ export default function ProductDetailPage() {
         setCartError("");
 
         try {
-            // Gửi batchId + quantity lên backend
             await addItem(batch.id, qty);
 
             setCartMessage(
                 `Đã thêm ${qty}kg ${product.name} vào giỏ hàng.`
             );
-
-            // Reset số lượng sau khi thêm thành công
             setQty(1);
         } catch (error: any) {
             console.error("Add to cart error:", error);
@@ -125,8 +121,6 @@ export default function ProductDetailPage() {
 
             <div className="grid md:grid-cols-2 gap-10">
 
-                {/* ================= IMAGE ================= */}
-
                 <div className="rounded-2xl overflow-hidden border bg-muted aspect-square">
 
                     {product.image ? (
@@ -143,29 +137,20 @@ export default function ProductDetailPage() {
 
                 </div>
 
-                {/* ================= PRODUCT INFO ================= */}
-
                 <div>
-
-                    {/* TRUST */}
-
                     {batch?.trustLevel && (
                         <TrustBadge
                             level={batch.trustLevel}
                         />
                     )}
 
-                    {/* NAME */}
-
                     <h1 className="text-3xl font-bold mt-3">
                         {product.name}
                     </h1>
 
-                    {/* FARM */}
-
                     <div className="flex items-start gap-1 text-sm text-muted-foreground mt-2">
 
-                        <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
+                        <MapPin className="w-4 h-4 mt-0.5 shrink-0"/>
 
                         <div>
 
@@ -193,13 +178,9 @@ export default function ProductDetailPage() {
 
                     </div>
 
-                    {/* PRICE */}
-
                     <div className="text-3xl font-bold text-primary mt-4">
                         {formatCurrency(product.price)}
                     </div>
-
-                    {/* STOCK */}
 
                     {batch ? (
                         <div className="text-sm text-muted-foreground mt-1">
@@ -212,14 +193,10 @@ export default function ProductDetailPage() {
                         </div>
                     )}
 
-                    {/* ================= CART ================= */}
-
                     {batch && remaining > 0 && (
                         <div className="mt-6">
 
                             <div className="flex items-center gap-3">
-
-                                {/* QUANTITY */}
 
                                 <div className="flex items-center border rounded-lg overflow-hidden">
 
@@ -234,8 +211,7 @@ export default function ProductDetailPage() {
                                                 )
                                             )
                                         }
-                                        className="px-3 py-2 hover:bg-muted disabled:opacity-50"
-                                    >
+                                        className="px-3 py-2 hover:bg-muted disabled:opacity-50">
                                         −
                                     </button>
 
@@ -254,23 +230,18 @@ export default function ProductDetailPage() {
                                                 )
                                             )
                                         }
-                                        className="px-3 py-2 hover:bg-muted disabled:opacity-50"
-                                    >
+                                        className="px-3 py-2 hover:bg-muted disabled:opacity-50">
                                         +
                                     </button>
 
                                 </div>
 
-                                {/* ADD CART */}
-
                                 <button
                                     type="button"
                                     onClick={handleAddToCart}
                                     disabled={adding}
-                                    className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold py-3 rounded-xl disabled:opacity-50"
-                                >
-
-                                    <ShoppingCart className="w-4 h-4" />
+                                    className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-semibold py-3 rounded-xl disabled:opacity-50">
+                                    <ShoppingCart className="w-4 h-4"/>
 
                                     {adding
                                         ? "Đang thêm..."
@@ -280,16 +251,11 @@ export default function ProductDetailPage() {
 
                             </div>
 
-                            {/* SUCCESS */}
-
                             {cartMessage && (
                                 <p className="text-sm text-green-600 mt-3">
                                     {cartMessage}
                                 </p>
                             )}
-
-                            {/* ERROR */}
-
                             {cartError && (
                                 <p className="text-sm text-destructive mt-3">
                                     {cartError}
@@ -298,9 +264,6 @@ export default function ProductDetailPage() {
 
                         </div>
                     )}
-
-                    {/* OUT OF STOCK */}
-
                     {batch && remaining <= 0 && (
                         <div className="mt-6">
 
@@ -313,29 +276,23 @@ export default function ProductDetailPage() {
 
                         </div>
                     )}
-
-                    {/* ================= TRACEABILITY ================= */}
-
                     {batch && (
                         <Link
                             to={`/trace?code=${batch.batchCode}`}
                             className="mt-4 inline-flex items-center gap-2 text-sm text-primary hover:underline"
                         >
-                            <ScanLine className="w-4 h-4" />
+                            <ScanLine className="w-4 h-4"/>
 
                             Xem nguồn gốc lô hàng{" "}
                             {batch.batchCode}
                         </Link>
                     )}
-
-                    {/* ================= DATES ================= */}
-
                     {batch && (
                         <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
 
                             <div className="p-3 rounded-lg bg-muted/50 flex items-center gap-2">
 
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <Calendar className="w-4 h-4 text-muted-foreground"/>
 
                                 <span>
                                     Gieo trồng:{" "}
@@ -350,7 +307,7 @@ export default function ProductDetailPage() {
 
                             <div className="p-3 rounded-lg bg-muted/50 flex items-center gap-2">
 
-                                <Calendar className="w-4 h-4 text-muted-foreground" />
+                                <Calendar className="w-4 h-4 text-muted-foreground"/>
 
                                 <span>
                                     Thu hoạch:{" "}
@@ -369,10 +326,7 @@ export default function ProductDetailPage() {
                 </div>
 
             </div>
-
-            {/* ================= REVIEWS ================= */}
-
-            <ReviewSection productId={product.id} />
+            <ReviewSection productId={product.id}/>
 
         </div>
     );

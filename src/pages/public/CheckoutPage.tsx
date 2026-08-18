@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { cartService} from "@/services/cartService";
-import { orderService } from "@/services/orderService";
-import { formatCurrency } from "@/lib/utils";
-import { CreditCard, Wallet, Truck } from "lucide-react";
+import {useEffect, useState} from "react";
+import {useNavigate, Link} from "react-router-dom";
+import {useAuth} from "@/hooks/useAuth";
+import {cartService} from "@/services/cartService";
+import {orderService} from "@/services/orderService";
+import {formatCurrency} from "@/lib/utils";
+import {CreditCard, Wallet, Truck} from "lucide-react";
 import type {CartItemResponse} from "@/types/cart.ts";
 
 const SHIPPING = 25000;
 
 export default function CheckoutPage() {
-    const { user } = useAuth();
+    const {user} = useAuth();
     const navigate = useNavigate();
 
     const [items, setItems] = useState<CartItemResponse[]>([]);
@@ -52,10 +52,6 @@ export default function CheckoutPage() {
 
         loadCart();
     }, []);
-
-    // =========================
-    // CẬP NHẬT THÔNG TIN USER
-    // =========================
     useEffect(() => {
         setForm({
             receiverName: user?.full_name ?? "",
@@ -64,9 +60,6 @@ export default function CheckoutPage() {
         });
     }, [user]);
 
-    // =========================
-    // ĐẶT HÀNG
-    // =========================
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -114,9 +107,6 @@ export default function CheckoutPage() {
         }
     };
 
-    // =========================
-    // LOADING
-    // =========================
     if (loading) {
         return (
             <div className="max-w-6xl mx-auto px-4 py-16 text-center text-muted-foreground">
@@ -125,9 +115,6 @@ export default function CheckoutPage() {
         );
     }
 
-    // =========================
-    // CART EMPTY
-    // =========================
     if (items.length === 0) {
         return (
             <div className="max-w-6xl mx-auto px-4 py-16 text-center">
@@ -160,13 +147,8 @@ export default function CheckoutPage() {
                 onSubmit={submit}
                 className="mt-6 grid md:grid-cols-[1fr_380px] gap-6"
             >
-
-                {/* =========================
-                    LEFT
-                ========================= */}
                 <div className="space-y-5">
 
-                    {/* THÔNG TIN NHẬN HÀNG */}
                     <div className="bg-card border rounded-2xl p-6">
 
                         <h2 className="font-semibold mb-4">
@@ -217,12 +199,10 @@ export default function CheckoutPage() {
 
                         </div>
                     </div>
-
-                    {/* PHƯƠNG THỨC GIAO HÀNG */}
                     <div className="bg-card border rounded-2xl p-6">
 
                         <h2 className="font-semibold mb-4 flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-primary" />
+                            <Truck className="w-4 h-4 text-primary"/>
                             Phương thức giao hàng
                         </h2>
 
@@ -242,12 +222,10 @@ export default function CheckoutPage() {
 
                         </div>
                     </div>
-
-                    {/* THANH TOÁN */}
                     <div className="bg-card border rounded-2xl p-6">
 
                         <h2 className="font-semibold mb-4 flex items-center gap-2">
-                            <Wallet className="w-4 h-4 text-primary" />
+                            <Wallet className="w-4 h-4 text-primary"/>
                             Phương thức thanh toán
                         </h2>
 
@@ -268,7 +246,7 @@ export default function CheckoutPage() {
                                     onChange={() => setPay("COD")}
                                 />
 
-                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                <CreditCard className="w-4 h-4 text-muted-foreground"/>
 
                                 <div>
                                     <div className="font-medium">
@@ -286,10 +264,6 @@ export default function CheckoutPage() {
                     </div>
 
                 </div>
-
-                {/* =========================
-                    RIGHT - ORDER SUMMARY
-                ========================= */}
                 <aside className="bg-card border rounded-2xl p-5 h-fit sticky top-20">
 
                     <div className="font-semibold mb-3">
@@ -332,8 +306,6 @@ export default function CheckoutPage() {
                         ))}
 
                     </div>
-
-                    {/* TOTAL */}
                     <div className="border-t mt-4 pt-4 space-y-2 text-sm">
 
                         <div className="flex justify-between">
@@ -371,8 +343,6 @@ export default function CheckoutPage() {
                         </div>
 
                     </div>
-
-                    {/* SUBMIT */}
                     <button
                         type="submit"
                         disabled={submitting}

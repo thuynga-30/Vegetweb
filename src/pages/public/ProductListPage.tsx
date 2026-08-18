@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import {useState} from "react";
+import {useSearchParams} from "react-router-dom";
+import {Search} from "lucide-react";
 
-import { useFetch } from "@/hooks/useFetch";
-import { productService } from "@/services/productService";
-import { categoryService } from "@/services/categoryService";
+import {useFetch} from "@/hooks/useFetch";
+import {productService} from "@/services/productService";
+import {categoryService} from "@/services/categoryService";
 
-import { ProductCard } from "@/components/common/ProductCard";
+import {ProductCard} from "@/components/common/ProductCard";
 
-import { categoryEmoji, categoryColor } from "@/lib/utils";
+import {categoryEmoji, categoryColor} from "@/lib/utils";
 
-import type { TrustLevel } from "@/types/batch";
+import type {TrustLevel} from "@/types/batch";
 
 const TRUST_LEVELS: {
     value: TrustLevel;
@@ -54,10 +54,6 @@ export default function ProductListPage() {
     const [sort, setSort] =
         useState<SortOption>("newest");
 
-    // =========================
-    // CATEGORY
-    // =========================
-
     const {
         data: categories,
         loading: categoryLoading,
@@ -65,10 +61,6 @@ export default function ProductListPage() {
         () => categoryService.getAll(),
         []
     );
-
-    // =========================
-    // PRODUCTS
-    // =========================
 
     const {
         data: productResponse,
@@ -97,10 +89,6 @@ export default function ProductListPage() {
         [keyword, category, trustLevels, sort]
     );
 
-    // =========================
-    // CATEGORY CHANGE
-    // =========================
-
     const setCategory = (id: string) => {
         setParams((current) => {
             const next = new URLSearchParams(current);
@@ -114,11 +102,6 @@ export default function ProductListPage() {
             return next;
         });
     };
-
-    // =========================
-    // TRUST LEVEL
-    // =========================
-
     const toggleTrustLevel = (
         level: TrustLevel
     ) => {
@@ -128,10 +111,6 @@ export default function ProductListPage() {
                 : [...prev, level]
         );
     };
-
-    // =========================
-    // SEARCH
-    // =========================
 
     const handleSearch = (
         value: string
@@ -160,10 +139,6 @@ export default function ProductListPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 py-10">
 
-            {/* =========================
-                HEADER
-            ========================= */}
-
             <div>
                 <h1 className="text-3xl font-bold">
                     Sản phẩm
@@ -177,13 +152,10 @@ export default function ProductListPage() {
 
             <div className="mt-6 grid md:grid-cols-[240px_1fr] gap-6 items-start">
 
-                {/* =========================
-                    SIDEBAR
-                ========================= */}
 
                 <aside className="space-y-4">
 
-                    {/* CATEGORY */}
+
 
                     <div className="bg-card border rounded-2xl p-4">
 
@@ -198,20 +170,11 @@ export default function ProductListPage() {
                         ) : (
                             <div className="space-y-1">
 
-                                {/* ALL */}
-
                                 <button
                                     onClick={() =>
                                         setCategory("")
                                     }
-                                    className={`
-                                        w-full text-left
-                                        px-3 py-2
-                                        rounded-lg
-                                        text-sm
-                                        flex items-center
-                                        gap-2
-                                        transition
+                                    className={` w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition
                                         ${
                                         category === ""
                                             ? "bg-primary/10 text-primary font-medium"
@@ -221,8 +184,6 @@ export default function ProductListPage() {
                                 >
                                     Tất cả
                                 </button>
-
-                                {/* CATEGORY LIST */}
 
                                 {categories?.map(
                                     (c) => (
@@ -281,8 +242,6 @@ export default function ProductListPage() {
 
                     </div>
 
-                    {/* TRUST LEVEL */}
-
                     <div className="bg-card border rounded-2xl p-4">
 
                         <h3 className="font-semibold text-sm mb-3">
@@ -325,13 +284,7 @@ export default function ProductListPage() {
 
                 </aside>
 
-                {/* =========================
-                    MAIN
-                ========================= */}
-
                 <div>
-
-                    {/* SEARCH + SORT */}
 
                     <div className="flex flex-col sm:flex-row gap-3">
 
@@ -340,15 +293,7 @@ export default function ProductListPage() {
                         <div className="relative flex-1">
 
                             <Search
-                                className="
-                                    w-4 h-4
-                                    absolute
-                                    left-3
-                                    top-1/2
-                                    -translate-y-1/2
-                                    text-muted-foreground
-                                "
-                            />
+                                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
 
                             <input
                                 value={keyword}
@@ -370,8 +315,6 @@ export default function ProductListPage() {
                             />
 
                         </div>
-
-                        {/* SORT */}
 
                         <select
                             value={sort}
@@ -406,21 +349,13 @@ export default function ProductListPage() {
 
                     </div>
 
-                    {/* =========================
-                        ERROR
-                    ========================= */}
-
                     {productError && (
                         <div className="mt-6 p-4 rounded-xl bg-red-50 text-red-600 text-sm">
                             Không thể tải danh sách sản phẩm.
-                            <br />
+                            <br/>
                             {productError}
                         </div>
                     )}
-
-                    {/* =========================
-                        LOADING
-                    ========================= */}
 
                     {productLoading ? (
                         <div className="py-16 text-center text-muted-foreground">
@@ -448,11 +383,6 @@ export default function ProductListPage() {
                         </div>
 
                     )}
-
-                    {/* =========================
-                        TOTAL
-                    ========================= */}
-
                     {!productLoading &&
                         productResponse?.meta && (
                             <div className="mt-6 text-sm text-muted-foreground">

@@ -1,29 +1,19 @@
-import { Link } from "react-router-dom";
-import { useCart } from "@/hooks/useCart";
-import { formatCurrency } from "@/lib/utils";
-import { ShoppingBag, Trash2 } from "lucide-react";
+import {Link} from "react-router-dom";
+import {useCart} from "@/hooks/useCart";
+import {formatCurrency} from "@/lib/utils";
+import {ShoppingBag, Trash2} from "lucide-react";
 
 const SHIPPING = 25000;
 
 export default function CartPage() {
-    const {
-        items,
-        updateQuantity,
-        removeItem,
-        totalPrice,
-        loading,
-    } = useCart();
+    const {items, updateQuantity, removeItem, totalPrice, loading,} = useCart();
 
     if (loading) {
         return (
             <div className="max-w-6xl mx-auto px-4 py-10">
-                <h1 className="text-3xl font-bold">
-                    Giỏ hàng
-                </h1>
+                <h1 className="text-3xl font-bold"> Giỏ hàng </h1>
 
-                <div className="mt-10 text-center text-muted-foreground">
-                    Đang tải giỏ hàng...
-                </div>
+                <div className="mt-10 text-center text-muted-foreground"> Đang tải giỏ hàng...</div>
             </div>
         );
     }
@@ -31,9 +21,7 @@ export default function CartPage() {
     return (
         <div className="max-w-6xl mx-auto px-4 py-10">
 
-            <h1 className="text-3xl font-bold">
-                Giỏ hàng
-            </h1>
+            <h1 className="text-3xl font-bold"> Giỏ hàng </h1>
 
             {items.length === 0 ? (
                 <div className="mt-16 text-center">
@@ -48,8 +36,7 @@ export default function CartPage() {
 
                     <Link
                         to="/products"
-                        className="mt-5 inline-block bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold"
-                    >
+                        className="mt-5 inline-block bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold">
                         Đi mua sắm
                     </Link>
 
@@ -57,8 +44,6 @@ export default function CartPage() {
             ) : (
 
                 <div className="mt-6 grid md:grid-cols-[1fr_360px] gap-6">
-
-                    {/* ================= CART ITEMS ================= */}
 
                     <div className="space-y-3">
 
@@ -68,33 +53,22 @@ export default function CartPage() {
                                 key={i.cart_id}
                                 className="bg-card border rounded-2xl p-4 flex gap-4"
                             >
-
-                                {/* IMAGE */}
-
                                 {i.image ? (
-                                    <img
-                                        src={i.image}
-                                        alt={i.product_name}
-                                        className="w-24 h-24 rounded-xl object-cover"
-                                    />
+                                    <img src={i.image} alt={i.product_name}
+                                         className="w-24 h-24 rounded-xl object-cover"/>
                                 ) : (
-                                    <div className="w-24 h-24 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                    <div
+                                        className="w-24 h-24 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">
                                         Không có ảnh
                                     </div>
                                 )}
-
-                                {/* PRODUCT INFO */}
-
                                 <div className="flex-1">
 
-                                    <div className="font-semibold">
-                                        {i.product_name}
-                                    </div>
+                                    <div
+                                        className="font-semibold">                                        {i.product_name}                                    </div>
 
                                     <div className="text-xs text-muted-foreground">
-                                        {i.farm_name}
-                                        {" · "}
-                                        Lô {i.batch_code}
+                                        {i.farm_name} {" · "} Lô {i.batch_code}
                                     </div>
 
                                     <div className="text-primary font-bold mt-1">
@@ -106,13 +80,7 @@ export default function CartPage() {
                                     </div>
 
                                 </div>
-
-                                {/* ACTIONS */}
-
                                 <div className="flex flex-col items-end gap-2">
-
-                                    {/* REMOVE */}
-
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -120,11 +88,8 @@ export default function CartPage() {
                                         }
                                         className="p-1.5 rounded hover:bg-destructive/10 text-destructive"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4"/>
                                     </button>
-
-                                    {/* QUANTITY */}
-
                                     <div className="flex items-center border rounded-lg overflow-hidden">
 
                                         <button
@@ -133,15 +98,10 @@ export default function CartPage() {
                                             onClick={() =>
                                                 updateQuantity(
                                                     i.cart_id,
-                                                    Math.max(
-                                                        1,
-                                                        i.quantity - 1
-                                                    )
-                                                )
-                                            }
-                                            className="px-2 hover:bg-muted disabled:opacity-50"
-                                        >
-                                            −
+                                                    Math.max(1, i.quantity - 1)
+                                                )}
+                                            className="px-2 hover:bg-muted disabled:opacity-50">
+                                            -
                                         </button>
 
                                         <span className="px-3 text-sm">
@@ -154,27 +114,16 @@ export default function CartPage() {
                                                 i.quantity >= i.stock
                                             }
                                             onClick={() =>
-                                                updateQuantity(
-                                                    i.cart_id,
-                                                    Math.min(
-                                                        i.stock,
-                                                        i.quantity + 1
-                                                    )
-                                                )
-                                            }
-                                            className="px-2 hover:bg-muted disabled:opacity-50"
-                                        >
+                                                updateQuantity(i.cart_id, Math.min(i.stock, i.quantity + 1)
+                                                )}
+                                            className="px-2 hover:bg-muted disabled:opacity-50">
                                             +
                                         </button>
 
                                     </div>
 
-                                    {/* SUBTOTAL */}
-
                                     <div className="font-semibold">
-                                        {formatCurrency(
-                                            i.price * i.quantity
-                                        )}
+                                        {formatCurrency(i.price * i.quantity)}
                                     </div>
 
                                 </div>
@@ -184,8 +133,6 @@ export default function CartPage() {
                         ))}
 
                     </div>
-
-                    {/* ================= SUMMARY ================= */}
 
                     <aside className="bg-card border rounded-2xl p-5 h-fit sticky top-20">
 

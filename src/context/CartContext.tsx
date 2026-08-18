@@ -8,23 +8,13 @@ import {
 import { cartService } from "@/services/cartService";
 
 export interface CartLine {
-    // ID của dòng cart trong database
     cart_id: number;
-
-    // ID của batch
     batch_id: number;
-
-    // Thông tin sản phẩm
     product_name: string;
     image: string | null;
     price: number;
-
-    // Số lượng đang có trong giỏ
     quantity: number;
-
-    // Số lượng còn lại trong kho
     stock: number;
-
     farm_name?: string;
     batch_code?: string;
 }
@@ -34,27 +24,22 @@ interface CartContextType {
 
     loading: boolean;
 
-    // Thêm sản phẩm vào giỏ
     addItem: (
         batchId: number,
         quantity: number
     ) => Promise<void>;
 
-    // Cập nhật số lượng
     updateQuantity: (
         cartId: number,
         quantity: number
     ) => Promise<void>;
 
-    // Xóa sản phẩm
     removeItem: (
         cartId: number
     ) => Promise<void>;
 
-    // Xóa state frontend sau checkout
     clearCart: () => void;
 
-    // Lấy lại cart từ database
     refreshCart: () => Promise<void>;
 
     totalItems: number;
@@ -80,41 +65,25 @@ export function CartProvider({
 
             const mappedItems: CartLine[] =
                 response.items.map((item) => ({
-                    // ID dòng cart
                     cart_id: item.id,
 
-                    // ID batch
                     batch_id: item.batch.id,
-
-                    // Tên sản phẩm
                     product_name:
                         item.product?.name ??
                         "Sản phẩm",
-
-                    // Hiện tại API cart chưa trả image
                     image: null,
-
-                    // Giá sản phẩm
                     price: Number(
                         item.product?.price ?? 0
                     ),
-
-                    // Số lượng trong cart
                     quantity: Number(
                         item.quantity
                     ),
-
-                    // Tồn kho thực tế
                     stock: Number(
                         item.batch
                             .quantityAvailable
                     ),
-
-                    // Tên nông trại
                     farm_name:
                     item.farmName,
-
-                    // Mã batch
                     batch_code:
                     item.batch.batchCode,
                 }));
@@ -167,8 +136,6 @@ export function CartProvider({
         await cartService.removeItem(
             cartId
         );
-
-        // Đồng bộ lại cart
         await refreshCart();
     };
 
