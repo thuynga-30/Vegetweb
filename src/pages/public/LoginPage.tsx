@@ -19,8 +19,8 @@ export default function LoginPage() {
         try {
             const res = await authService.login(form.email, form.password);
             login(res.user, res.token);
-            if (res.user.role === "Seller") navigate("/seller");
-            else if (res.user.role === "Admin") navigate("/admin");
+            if (res.user.role === "seller") navigate("/seller");
+            else if (res.user.role === "admin") navigate("/admin");
             else navigate("/");
         } catch (err: any) {
             setError(err?.message ?? "Đăng nhập thất bại");

@@ -53,7 +53,7 @@ export default function AppRouter() {
                     <Route path="/profile" element={<ProfilePage />} />
                 </Route>
 
-                <Route element={<ProtectedRoute allow={["Seller"]} />}>
+                <Route element={<ProtectedRoute allow={["seller"]} />}>
                     <Route element={<SellerLayout />}>
                         <Route path="/seller" element={<SellerOverviewPage />} />
                         <Route path="/seller/farm" element={<FarmProfilePage />} />
@@ -65,7 +65,7 @@ export default function AppRouter() {
                 </Route>
 
                 {/* Admin (chỉ role = Admin) */}
-                <Route element={<ProtectedRoute allow={["Admin"]} />}>
+                <Route element={<ProtectedRoute allow={["admin"]} />}>
                     <Route element={<AdminLayout />}>
                         <Route path="/admin" element={<AdminOverviewPage />} />
                         <Route path="/admin/approvals" element={<ApprovalsPage />} />

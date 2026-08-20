@@ -1,9 +1,9 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
-const BYPASS_AUTH_FOR_PREVIEW = true;
+const BYPASS_AUTH_FOR_PREVIEW = false;
 
-export function ProtectedRoute({ allow }: { allow: ("Buyer" | "Seller" | "Admin")[] }) {
+export function ProtectedRoute({ allow }: { allow: ("buyer" | "seller" | "admin")[] }) {
     const { user } = useAuth();
 
     if (BYPASS_AUTH_FOR_PREVIEW) return <Outlet />;

@@ -27,5 +27,5 @@ dist/
 *.njsproj
 *.sln
 *.sw?
-
+./mockServiceWorker.js
 

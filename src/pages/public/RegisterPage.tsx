@@ -5,7 +5,7 @@ import { Leaf } from "lucide-react";
 
 export default function RegisterPage() {
     const navigate = useNavigate();
-    const [role, setRole] = useState<"Buyer" | "Seller">("Buyer");
+    const [role, setRole] = useState<"buyer" | "seller">("buyer");
     const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "", address: "" });
     const [agree, setAgree] = useState(false);
     const [error, setError] = useState("");
@@ -58,12 +58,12 @@ export default function RegisterPage() {
                     <h1 className="text-2xl font-bold mt-8">Đăng ký tài khoản</h1>
 
                     <div className="grid grid-cols-2 gap-2 p-1 rounded-lg bg-muted mt-5">
-                        {(["Buyer", "Seller"] as const).map((r) => (
+                        {(["buyer", "seller"] as const).map((r) => (
                             <button
                                 type="button" key={r} onClick={() => setRole(r)}
                                 className={`py-2 rounded-md text-sm font-medium transition ${role === r ? "bg-card shadow border" : "text-muted-foreground"}`}
                             >
-                                {r === "Buyer" ? "Người mua" : "Nông dân / Người bán"}
+                                {r === "buyer" ? "Người mua" : "Nông dân / Người bán"}
                             </button>
                         ))}
                     </div>

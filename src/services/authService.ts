@@ -19,7 +19,7 @@ export const authService = {
         password: string;
         phone: string;
         address: string;
-        role: "Buyer" | "Seller";
+        role: "buyer" | "seller";
     }) => api.post("/auth/register", payload) as Promise<ApiResponse<User>>,
 
     getProfile: () => api.get("/users/profile") as Promise<ApiResponse<User>>,
