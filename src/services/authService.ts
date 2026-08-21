@@ -27,4 +27,21 @@ export const authService = {
     updateProfile: (
         payload: Partial<Pick<User, "full_name" | "phone" | "address" | "avatar">>
     ) => api.put("/users/profile", payload) as Promise<ApiResponse<User>>,
+    uploadAvatar: (file: File) => {
+
+        const formData = new FormData();
+
+        formData.append("file", file);
+
+        return api.post(
+            "/users/profile/avatar",
+            formData,
+            {
+                headers: {
+                    "Content-Type":
+                        "multipart/form-data",
+                },
+            },
+        ) as Promise<ApiResponse<User>>;
+    },
 };

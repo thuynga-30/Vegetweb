@@ -47,7 +47,42 @@ export default function ProfilePage() {
     };
 
     const role = profile?.data.role ?? sessionUser?.role;
+    const handleAvatarChange = async (
+        e: React.ChangeEvent<HTMLInputElement>,
+    ) => {
 
+        const file = e.target.files?.[0];
+
+        if (!file) return;
+
+        try {
+            setSaving(true);
+            setMessage("");
+
+            const result =
+                await authService.uploadAvatar(file);
+
+            setForm((prev) => ({
+                ...prev,
+                avatar: result.data.avatar ?? "",
+            }));
+
+            setMessage(
+                "Đã cập nhật ảnh đại diện.",
+            );
+
+        } catch (err: any) {
+
+            setMessage(
+                err?.response?.data?.message ??
+                err?.message ??
+                "Upload ảnh thất bại",
+            );
+
+        } finally {
+            setSaving(false);
+        }
+    };
     if (loading) return <div className="max-w-3xl mx-auto px-4 py-16 text-muted-foreground">Đang tải...</div>;
 
     return (
@@ -65,8 +100,10 @@ export default function ProfilePage() {
                         <div className="flex-1">
                             <label className="text-sm font-medium">Ảnh đại diện (URL)</label>
                             <input
-                                value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })}
-                                placeholder="https://..." className="w-full mt-1 px-3 py-2 rounded-lg border bg-background text-sm"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                                className="w-full mt-1 px-3 py-2 rounded-lg border bg-background text-sm"
                             />
                         </div>
                     </div>
@@ -100,16 +137,16 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="bg-card border rounded-2xl p-2">
-                        {role === "Buyer" && (
+                        {role === "buyer" && (
                             <Shortcut to="/orders" icon={ShoppingBag} label="Đơn hàng của tôi"/>
                         )}
-                        {role === "Seller" && (
+                        {role === "seller" && (
                             <>
                                 <Shortcut to="/seller" icon={LayoutDashboard} label="Kênh nông dân"/>
                                 <Shortcut to="/seller/batches" icon={Package} label="Lô hàng của tôi"/>
                             </>
                         )}
-                        {role === "Admin" && (
+                        {role === "admin" && (
                             <Shortcut to="/admin" icon={LayoutDashboard} label="Trang quản trị"/>
                         )}
                         <button
