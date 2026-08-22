@@ -21,7 +21,6 @@ export interface CartLine {
 
 interface CartContextType {
     items: CartLine[];
-
     loading: boolean;
 
     addItem: (
@@ -50,59 +49,60 @@ export const CartContext =
     createContext<CartContextType | null>(null);
 
 export function CartProvider({
-                                 children,
-                             }: {
+    children,
+}: {
     children: ReactNode;
 }) {
     const [items, setItems] = useState<CartLine[]>([]);
     const [loading, setLoading] = useState(false);
+
     const refreshCart = async () => {
         try {
             setLoading(true);
 
-            const response =
-                await cartService.getMyCart();
+            const response = await cartService.getMyCart();
 
             const mappedItems: CartLine[] =
                 response.items.map((item) => ({
                     cart_id: item.id,
 
                     batch_id: item.batch.id,
+
                     product_name:
-                        item.product?.name ??
-                        "Sản phẩm",
-                    image: null,
-                    price: Number(
-                        item.product?.price ?? 0
-                    ),
-                    quantity: Number(
-                        item.quantity
-                    ),
-                    stock: Number(
-                        item.batch
-                            .quantityAvailable
-                    ),
+                        item.product?.name ?? "Sản phẩm",
+
+                    image:
+                        item.image ?? null,
+
+                    price:
+                        Number(item.product?.price ?? 0),
+
+                    quantity:
+                        Number(item.quantity),
+
+                    stock:
+                        Number(item.batch.quantityAvailable),
+
                     farm_name:
-                    item.farmName,
+                        item.farmName,
+
                     batch_code:
-                    item.batch.batchCode,
+                        item.batch.batchCode,
                 }));
 
             setItems(mappedItems);
         } catch (error) {
-            console.error(
-                "Get cart error:",
-                error
-            );
-
+            console.error("Get cart error:", error);
             setItems([]);
         } finally {
             setLoading(false);
         }
     };
+
     useEffect(() => {
         refreshCart();
     }, []);
+
     const addItem = async (
         batchId: number,
         quantity: number
@@ -114,6 +114,7 @@ export function CartProvider({
 
         await refreshCart();
     };
+
     const updateQuantity = async (
         cartId: number,
         quantity: number
@@ -133,9 +134,7 @@ export function CartProvider({
     const removeItem = async (
         cartId: number
     ) => {
-        await cartService.removeItem(
-            cartId
-        );
+        await cartService.removeItem(cartId);
         await refreshCart();
     };
 

@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { orderService } from "@/services/orderService";
 import { formatCurrency } from "@/lib/utils";
 import { CreditCard, Wallet, Truck } from "lucide-react";
+import {paymentService} from "@/services/paymentService.ts";
 
 const SHIPPING = 25000;
 
@@ -12,8 +13,7 @@ export default function CheckoutPage() {
     const { items, totalPrice, clearCart } = useCart();
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [pay, setPay] = useState("cod");
-
+    const [pay, setPay] = useState("COD");
     const [form, setForm] = useState({
         receiver_name: user?.full_name ?? "",
         receiver_phone: user?.phone ?? "",
@@ -33,11 +33,6 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (pay !== "cod") {
-            setError("Hiện tại chỉ hỗ trợ thanh toán khi nhận hàng (COD).");
-            return;
-        }
-
         setError("");
         setSuccess("");
         setLoading(true);
@@ -48,25 +43,25 @@ export default function CheckoutPage() {
                 receiverName: form.receiver_name,
                 receiverPhone: form.receiver_phone,
                 shippingAddress: form.shipping_address,
-                paymentMethod: "COD" as const,
+                paymentMethod: pay as "COD" | "VNPay",
             };
 
             const response = await orderService.checkout(payload);
-
             console.log("Checkout success:", response);
-
-            setSuccess(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
 
             clearCart();
 
-            setTimeout(() => {
-                navigate("/orders");
-            }, 800);
+            if (pay === "VNPay") {
+                const { paymentUrl } = await paymentService.createVnpayUrl(response.orderId);
+                window.location.href = paymentUrl; // chuyển hẳn sang trang VNPay
+                return;
+            }
+
+            setSuccess(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
+            setTimeout(() => navigate("/orders"), 800);
         } catch (err: any) {
             console.error("Checkout error:", err);
-
             const message = err?.response?.data?.message ?? err?.message ?? "Đặt hàng thất bại, vui lòng thử lại.";
-
             setError(Array.isArray(message) ? message.join(", ") : message);
         } finally {
             setLoading(false);
@@ -140,30 +135,25 @@ export default function CheckoutPage() {
                         </h2>
 
                         <div className="space-y-2">
-
-                            {/* COD */}
-
-                            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${pay === "cod" ? "border-primary bg-primary/5" : ""}`}>
-                                <input type="radio" name="pay" value="cod" checked={pay === "cod"} onChange={() => setPay("cod")} className="accent-primary" />
-
+                            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${pay === "COD" ? "border-primary bg-primary/5" : ""}`}>
+                                <input type="radio" name="pay" value="COD" checked={pay === "COD"} onChange={() => setPay("COD")} className="accent-primary" />
                                 <CreditCard className="w-4 h-4 text-muted-foreground" />
-
                                 Thanh toán khi nhận hàng (COD)
+                            </label>
+
+                            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${pay === "VNPay" ? "border-primary bg-primary/5" : ""}`}>
+                                <input type="radio" name="pay" value="VNPay" checked={pay === "VNPay"} onChange={() => setPay("VNPay")} className="accent-primary" />
+                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                VNPay (ATM / Thẻ quốc tế / QR)
                             </label>
 
                             {[
                                 { v: "banking", l: "Chuyển khoản ngân hàng" },
                                 { v: "momo", l: "Ví MoMo" },
-                                { v: "card", l: "Thẻ tín dụng / ghi nợ" },
                             ].map((o) => (
-                                <label
-                                    key={o.v}
-                                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer opacity-50 ${pay === o.v ? "border-primary bg-primary/5" : ""}`}
-                                >
-                                    <input type="radio" name="pay" value={o.v} checked={pay === o.v} onChange={() => setPay(o.v)} className="accent-primary" disabled />
-
+                                <label key={o.v} className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer opacity-50">
+                                    <input type="radio" disabled className="accent-primary" />
                                     <CreditCard className="w-4 h-4 text-muted-foreground" />
-
                                     {o.l}
                                 </label>
                             ))}
@@ -180,9 +170,10 @@ export default function CheckoutPage() {
                         {items.map((i) => (
                             <div key={i.cart_id} className="flex gap-3 text-sm">
                                 {i.image ? (
-                                    <img src={i.image} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                                    <img src={i.image} className="w-12 h-12 rounded-lg object-cover" alt=""/>
                                 ) : (
-                                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                    <div
+                                        className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground">
                                         No image
                                     </div>
                                 )}
@@ -228,9 +219,9 @@ export default function CheckoutPage() {
                     </div>
                     <button
                         type="submit"
-                        disabled={items.length === 0 || loading || pay !== "cod"}
+                        disabled={items.length === 0 || loading}
                         className="mt-5 w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold disabled:opacity-50">
-                        {loading ? "Đang đặt hàng..." : "Đặt hàng"}
+                        {loading ? "Đang xử lý..." : pay === "VNPay" ? "Thanh toán qua VNPay" : "Đặt hàng"}
                     </button>
                 </aside>
             </form>

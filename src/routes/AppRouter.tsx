@@ -31,6 +31,7 @@ import FarmsPage from "@/pages/admin/FarmsPage";
 import FarmApprovalDetailPage from "@/pages/admin/FarmApprovalDetailPage";
 import AdminOrdersPage from "@/pages/admin/AdminOrdersPage";
 import ReportsPage from "@/pages/admin/ReportsPage";
+import PaymentResultPage from "@/pages/public/PaymentResultPage";
 
 export default function AppRouter() {
     return (
@@ -51,6 +52,7 @@ export default function AppRouter() {
                     <Route path="/orders" element={<MyOrdersPage />} />
                     <Route path="/orders/:id" element={<OrderDetailPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/payment/vnpay/return" element={<PaymentResultPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allow={["seller"]} />}>

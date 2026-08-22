@@ -1,30 +1,5 @@
 import api from "@/lib/axios";
-
-export interface CartItemResponse {
-    id: number;
-    quantity: number;
-
-    batch: {
-        id: number;
-        batchCode: string;
-        quantityAvailable: number;
-    };
-
-    product: {
-        id: number;
-        name: string;
-        price: number;
-    } | null;
-
-    farmName?: string;
-
-    subtotal: number;
-}
-
-export interface CartResponse {
-    items: CartItemResponse[];
-    totalAmount: number;
-}
+import type {CartResponse} from "@/types/cart.ts";
 
 export const cartService = {
 

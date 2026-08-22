@@ -1,24 +1,17 @@
-
 export interface CartItem {
     id: number;
     quantity: number;
-
-    batch: {
+    batch:{
         id: number;
         batchCode: string;
-        quantityAvailable: number;
-    };
-
-    product: {
+        quantityAvailable: number; }
+    ; product: {
         id: number;
         name: string;
-        price: number | string;
-    } | null;
-
+        price: number | string; } | null;
+    image: string | null;
     farmName?: string;
-
-    subtotal: number;
-}
+    subtotal: number; }
 
 export interface CartResponse {
     items: CartItem[];
@@ -28,28 +21,4 @@ export interface CartResponse {
 export interface AddToCartPayload {
     batchId: number;
     quantity: number;
-}
-export interface CartItemResponse {
-    id: number;
-    quantity: number;
-
-    batch: {
-        id: number;
-        batchCode: string;
-        quantityAvailable: number;
-    };
-
-    product: {
-        id: number;
-        name: string;
-        price: number;
-    } | null;
-
-    farmName?: string;
-    subtotal: number;
-}
-
-export interface MyCartResponse {
-    items: CartItemResponse[];
-    totalAmount: number;
 }
