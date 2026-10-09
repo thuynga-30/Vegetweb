@@ -64,12 +64,14 @@ export interface BatchTraceData {
 }
 
 export interface CreateBatchPayload {
-    product_name: string;
-    planting_date: string;
-    harvest_date: string;
+    sellerId?: number;
+    productId: number;
+    plantingDate?: string;
+    harvestDate: string;
     quantity: number;
-    price?: number;
-    image?: string;
-    logs: { log_date: string; activity: string; description?: string }[];
+    cultivationLogs?: {
+        activity: string;
+        description?: string;
+        logDate: string;
+    }[];
 }
-

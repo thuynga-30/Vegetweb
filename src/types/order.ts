@@ -12,6 +12,7 @@ export interface Order {
     status: OrderStatus;
     tracking_note?: string;
     created_at: string;
+    seller_total?: number;
 }
 
 export interface OrderDetail {
@@ -20,6 +21,10 @@ export interface OrderDetail {
     batch_id: number;
     quantity: number;
     price: number;
+    product_name?: string;
+    image?: string;
+    farm_name?: string;
+    batch_code?: string;
 }
 export interface CheckoutPayload {
     cartItemIds: number[];

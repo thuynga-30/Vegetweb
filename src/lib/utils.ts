@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number): string {
-  return value.toLocaleString("vi-VN") + "₫";
+  return (value ?? 0).toLocaleString("vi-VN") + "₫";
 }
 
 export function formatDate(dateStr: string): string {

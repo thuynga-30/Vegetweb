@@ -7,15 +7,42 @@ import { TrustBadge } from "@/components/common/TrustBadge";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { formatCurrency } from "@/lib/utils";
 import { Package, ShoppingBag, CheckSquare, TrendingUp, ArrowRight } from "lucide-react";
-
+import { Loader2 } from "lucide-react";
 export default function SellerOverviewPage() {
-    const { data: batches } = useFetch(() => batchService.getMyBatches(), []);
-    const { data: orders } = useFetch(() => orderService.getSellerOrders(), []);
-
+    // const { data: batches } = useFetch(() => batchService.getMyBatches(), []);
+    // const { data: orders } = useFetch(() => orderService.getSellerOrders(), []);
+    const { data: batches, loading: lb, error: eb, refetch: rb } =
+        useFetch(() => batchService.getMyBatches(), []);
+    const { data: orders, loading: lo, error: eo, refetch: ro } =
+        useFetch(() => orderService.getSellerOrders(), []);
     const pending = batches?.filter((b) => b.approval_status === "Pending") ?? [];
     const onSale = batches?.filter((b) => b.approval_status === "Approved") ?? [];
-    const revenue = orders?.reduce((s, o) => s + o.total_price, 0) ?? 0;
+    //tính doanh thu
+    const revenue =
+        orders
+            ?.filter((o) => o.status !== "Cancelled")
+            .reduce((s, o) => s + (o.seller_total ?? 0), 0) ?? 0;
 
+    if (lb || lo) {
+        return (
+            <div className="flex justify-center py-20">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+    if (eb || eo) {
+        return (
+            <div className="bg-card border rounded-2xl p-6 text-center space-y-3">
+                <p className="text-sm text-destructive">{eb ?? eo}</p>
+                <button
+                    onClick={() => { rb(); ro(); }}
+                    className="text-sm text-primary underline"
+                >
+                    Thử lại
+                </button>
+            </div>
+        );
+    }
     return (
         <div className="space-y-6">
             <div className="grid md:grid-cols-4 gap-4">
@@ -33,7 +60,7 @@ export default function SellerOverviewPage() {
                 <div className="space-y-2">
                     {batches?.slice(0, 5).map((b) => (
                         <Link key={b.id} to={`/seller/batches/${b.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
-                            <img src={b.image} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                            {b?.image && <img src={b.image} className="w-10 h-10 rounded-lg object-cover" alt="" />}
                             <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm truncate">{b.product_name}</div>
                                 <div className="text-xs text-muted-foreground truncate">{b.batch_code}</div>

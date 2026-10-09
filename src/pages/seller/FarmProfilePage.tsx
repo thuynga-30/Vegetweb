@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFetch } from "@/hooks/useFetch";
 import { farmService } from "@/services/farmService";
 import type { Certification } from "@/types/farm";
-import { MapPin, Save, Award, ShieldCheck, TrendingUp, Upload, X } from "lucide-react";
+import { MapPin, Save, Award, ShieldCheck, Upload, X } from "lucide-react";
 
 export default function FarmProfilePage() {
     const { data: farm, loading, refetch } = useFetch(() => farmService.getMyFarm(), []);
@@ -21,15 +21,15 @@ export default function FarmProfilePage() {
     useEffect(() => {
         if (farm) {
             setForm({
-                farm_name: farm.farm_name ?? "",
-                owner_name: farm.owner_name ?? "",
+                farm_name: farm.farmName ?? "",
+                owner_name: farm.ownerName ?? "",
                 address: farm.address ?? "",
                 description: farm.description ?? "",
-                image: farm.image ?? "",
-                area_ha: farm.area_ha != null ? String(farm.area_ha) : "",
-                farming_method: farm.farming_method ?? "",
+                image: farm.images[0]?? "",
+                area_ha: farm.areaHa != null ? String(farm.areaHa) : "",
+                farming_method: farm.farmingMethod ?? "",
             });
-            setCertifications(farm.certifications ?? []);
+            // setCertifications(farm.certifications ?? []);
         }
     }, [farm]);
 
@@ -99,7 +99,7 @@ export default function FarmProfilePage() {
                             <div className="grid grid-cols-3 gap-3 mt-4">
                                 <Info label="Diện tích" value={form.area_ha ? `${form.area_ha} ha` : "—"} />
                                 <Info label="Phương pháp" value={form.farming_method || "—"} />
-                                <Info label="Tọa độ GPS" value={farm?.gps_lat ? `${farm.gps_lat}, ${farm.gps_lng}` : "—"} />
+                                {/*<Info label="Tọa độ GPS" value={farm?.gps_lat ? `${farm.gps_lat}, ${farm.gps_lng}` : "—"} />*/}
                             </div>
                         </div>
                     </div>
@@ -173,24 +173,24 @@ export default function FarmProfilePage() {
                         )}
                     </div>
 
-                    <div className="bg-card border rounded-2xl p-5">
-                        <h3 className="font-semibold flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4 text-primary" /> Điểm uy tín</h3>
-                        <div className="text-3xl font-bold text-primary">{farm?.trust_score ?? "—"}<span className="text-base text-muted-foreground">/5</span></div>
-                        <p className="text-xs text-muted-foreground mt-1">Dựa trên đơn hàng và đánh giá của người mua</p>
-                        <div className="mt-4 space-y-3">
-                            {(farm?.trust_metrics ?? []).map((m) => (
-                                <div key={m.label}>
-                                    <div className="flex justify-between text-xs mb-1">
-                                        <span className="text-muted-foreground">{m.label}</span>
-                                        <span className="font-medium">{m.percent}%</span>
-                                    </div>
-                                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                                        <div className="h-full bg-primary rounded-full" style={{ width: `${m.percent}%` }} />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    {/*<div className="bg-card border rounded-2xl p-5">*/}
+                    {/*    <h3 className="font-semibold flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4 text-primary" /> Điểm uy tín</h3>*/}
+                    {/*    <div className="text-3xl font-bold text-primary">{farm?.trust_score ?? "—"}<span className="text-base text-muted-foreground">/5</span></div>*/}
+                    {/*    <p className="text-xs text-muted-foreground mt-1">Dựa trên đơn hàng và đánh giá của người mua</p>*/}
+                    {/*    <div className="mt-4 space-y-3">*/}
+                    {/*        {(farm?.trust_metrics ?? []).map((m) => (*/}
+                    {/*            <div key={m.label}>*/}
+                    {/*                <div className="flex justify-between text-xs mb-1">*/}
+                    {/*                    <span className="text-muted-foreground">{m.label}</span>*/}
+                    {/*                    <span className="font-medium">{m.percent}%</span>*/}
+                    {/*                </div>*/}
+                    {/*                <div className="h-1.5 rounded-full bg-muted overflow-hidden">*/}
+                    {/*                    <div className="h-full bg-primary rounded-full" style={{ width: `${m.percent}%` }} />*/}
+                    {/*                </div>*/}
+                    {/*            </div>*/}
+                    {/*        ))}*/}
+                    {/*    </div>*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </div>

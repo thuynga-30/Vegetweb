@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import {  useState } from "react";
 import { useFetch } from "@/hooks/useFetch";
 import { userService } from "@/services/userService";
 import { farmService } from "@/services/farmService";
@@ -6,23 +6,17 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import { USER_STATUS_LABEL, USER_STATUS_COLOR } from "@/lib/constants";
 import { Link } from "react-router-dom";
-import { Check, X, ChevronDown, MapPin, Award, ArrowRight, Ban, RotateCcw } from "lucide-react";
+import { Check, X, ChevronDown, MapPin, ArrowRight, Ban, RotateCcw } from "lucide-react";
 import type { UserRole } from "@/types/user";
 
 export default function UsersPage() {
     const [role, setRole] = useState<UserRole | "">("");
     const { data: users, loading, refetch: refetchUsers } = useFetch(() => userService.getAll(role || undefined), [role]);
-    const { data: farms, refetch: refetchFarms } = useFetch(() => farmService.getAll(), []);
-
+    const { data: farms, refetch: refetchFarms } = useFetch(() => farmService.getAllAdmin(), []);
     const [expanded, setExpanded] = useState<number | null>(null);
     const [actingId, setActingId] = useState<number | null>(null);
     const [togglingId, setTogglingId] = useState<number | null>(null);
 
-    const farmBySeller = useMemo(() => {
-        const map = new Map<number, NonNullable<typeof farms>[number]>();
-        farms?.forEach((f) => map.set(f.seller_id, f));
-        return map;
-    }, [farms]);
 
     const act = async (farmId: number, action: "approve" | "reject") => {
         setActingId(farmId);
@@ -50,11 +44,25 @@ export default function UsersPage() {
             setTogglingId(null);
         }
     };
+    const getFarmStatusLabel = (
+        status?: "pending" | "approved" | "rejected"
+    ): "Pending" | "Approved" | "Rejected" => {
+        switch (status) {
+            case "approved":
+                return "Approved";
 
+            case "rejected":
+                return "Rejected";
+
+            case "pending":
+            default:
+                return "Pending";
+        }
+    };
     return (
         <div>
             <div className="flex items-center gap-2 mb-5">
-                {(["", "Admin", "Seller", "Buyer"] as const).map((r) => (
+                {(["", "admin", "seller", "buyer"] as const).map((r) => (
                     <button key={r} onClick={() => setRole(r)}
                             className={`px-4 py-1.5 rounded-full text-sm ${role === r ? "bg-primary text-primary-foreground" : "border"}`}>
                         {r === "" ? "Tất cả" : r}
@@ -77,7 +85,10 @@ export default function UsersPage() {
                     </thead>
                     <tbody>
                     {users?.map((u) => {
-                        const farm = u.role === "Seller" ? farmBySeller.get(u.id) : undefined;
+                        const farm =
+                            u.role === "seller"
+                                ? farms?.find((f) => f.sellerId === u.id)
+                                : undefined;
                         const isOpen = expanded === u.id;
                         const isDisabled = u.status === "Disabled";
                         return (
@@ -97,8 +108,18 @@ export default function UsersPage() {
                                     <td className="p-3">
                                         {farm ? (
                                             <div className="flex items-center gap-2">
-                                                <StatusBadge status={farm.approval_status ?? "Pending"} />
-                                                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                                                <StatusBadge
+                                                    status={getFarmStatusLabel(
+                                                        farm.status
+                                                    )}
+                                                />                                                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                                                <ChevronDown
+                                                    className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${
+                                                        isOpen
+                                                            ? "rotate-180"
+                                                            : ""
+                                                    }`}
+                                                />
                                             </div>
                                         ) : (
                                             <span className="text-muted-foreground text-xs">—</span>
@@ -112,7 +133,7 @@ export default function UsersPage() {
                                     <td className="p-3">{formatDate(u.created_at)}</td>
                                     <td className="p-3 text-right" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex justify-end gap-2">
-                                            {farm && farm.approval_status === "Pending" && (
+                                            {farm && farm.status === "pending" && (
                                                 <>
                                                     <button
                                                         disabled={actingId === farm.id}
@@ -130,7 +151,7 @@ export default function UsersPage() {
                                                     </button>
                                                 </>
                                             )}
-                                            {u.role !== "Admin" && (
+                                            {u.role !== "admin" && (
                                                 isDisabled ? (
                                                     <button
                                                         disabled={togglingId === u.id}
@@ -156,21 +177,23 @@ export default function UsersPage() {
                                     <tr className="border-t bg-muted/20">
                                         <td colSpan={8} className="p-4">
                                             <div className="flex gap-4">
-                                                <img src={farm.image} alt="" className="w-28 h-20 rounded-lg object-cover flex-shrink-0" />
+                                                {farm.coverImage ? (
+                                                    <img src={farm.coverImage} alt={farm.farmName} className="w-28 h-20 rounded-lg object-cover flex-shrink-0"/>
+                                                ) : (
+                                                    <div className="w-28 h-20 rounded-lg bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
+                                                        Chưa có ảnh
+                                                    </div>
+                                                )}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-semibold">{farm.farm_name}</div>
+                                                    <div className="font-semibold">{farm.farmName}</div>
                                                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                                                         <MapPin className="w-3 h-3" /> {farm.address}
                                                     </div>
                                                     <p className="text-sm text-muted-foreground mt-1.5">{farm.description}</p>
                                                     <div className="flex items-center gap-2 mt-2 flex-wrap">
-                                                        {farm.certifications?.map((c) => (
-                                                            <span key={c.name} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-card border">
-                                  <Award className="w-3 h-3 text-primary" /> {c.name}
-                                </span>
-                                                        ))}
-                                                        {farm.area_ha && (
-                                                            <span className="text-xs text-muted-foreground">Diện tích: {farm.area_ha}ha</span>
+
+                                                        {farm.areaHa && (
+                                                            <span className="text-xs text-muted-foreground">Diện tích: {farm.areaHa}ha</span>
                                                         )}
                                                     </div>
                                                     <Link

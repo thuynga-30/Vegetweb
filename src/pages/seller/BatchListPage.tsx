@@ -36,18 +36,25 @@ export default function BatchListPage() {
                         <tr key={b.id} className="border-t hover:bg-muted/30">
                             <td className="p-3">
                                 <div className="flex items-center gap-3">
-                                    <img src={b.image} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                                    {b?.image && <img src={b.image} className="w-10 h-10 rounded-lg object-cover" alt="" />}
                                     <div className="font-medium">{b.product_name}</div>
                                 </div>
                             </td>
-                            <td className="p-3 font-mono text-xs">{b.batch_code}</td>
+                            <td className="p-3 font-mono text-xs">{b.barcode ?? "—"}</td>
                             <td className="p-3">{formatDate(b.harvest_date)}</td>
                             <td className="p-3">{b.sold ?? 0}/{b.quantity} kg</td>
                             <td className="p-3"><TrustBadge level={b.trust_level} size="sm" /></td>
                             <td className="p-3"><StatusBadge status={b.approval_status} /></td>
                             <td className="p-3 text-right">
                                 <div className="inline-flex gap-1">
-                                    <button className="p-1.5 hover:bg-muted rounded" title="Mã QR"><QrCode className="w-4 h-4" /></button>
+                                    <button className="p-1.5 hover:bg-muted rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title={b.barcode ? "Mã QR" : "Chưa có mã QR"}
+                                            disabled={!b.barcode}
+                                    >
+                                        <QrCode className="w-4 h-4" />
+                                    </button>
+
+
                                     <Link to={`/seller/batches/${b.id}`} className="px-3 py-1 rounded bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20">
                                         Chi tiết
                                     </Link>

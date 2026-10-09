@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFetch } from "@/hooks/useFetch";
-import { batchService } from "@/services/batchService";
+import { approvalService } from "@/services/approvalService";
 import { TrustBadge } from "@/components/common/TrustBadge";
 import { formatDate } from "@/lib/utils";
 import type { ApprovalStatus } from "@/types/batch";
 
 export default function ApprovalsPage() {
     const [filter, setFilter] = useState<ApprovalStatus | "All">("Pending");
-    const { data: batches, loading } = useFetch(() => batchService.getAllAdmin(), []);
+    // approvalService.getPending() chỉ trả batch đang Pending —
+    // nên khi filter khác "Pending"/"All", danh sách sẽ rỗng cho tới khi
+    // có endpoint riêng trả toàn bộ trạng thái (xem ghi chú bên dưới)
+    const { data: batches, loading } = useFetch(
+        () => (filter === "Pending" ? approvalService.getPending() : approvalService.getAll()),
+        [filter]
+    );
 
     const list = (batches ?? []).filter((b) => (filter === "All" ? true : b.approval_status === filter));
-
+    console.log("sample:", batches?.[0]);
     return (
         <div>
             <div className="flex items-center gap-2 mb-5">
@@ -32,7 +38,7 @@ export default function ApprovalsPage() {
                 <div className="grid md:grid-cols-2 gap-4">
                     {list.map((b) => (
                         <Link key={b.id} to={`/admin/approvals/${b.id}`} className="bg-card border rounded-2xl p-4 flex gap-4 hover:border-primary transition">
-                            <img src={b.image} className="w-24 h-24 rounded-xl object-cover" alt="" />
+                            {b?.image && <img src={b.image} className="w-24 h-24 rounded-xl object-cover" alt="" />}
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-semibold truncate">{b.product_name}</span>

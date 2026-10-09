@@ -7,18 +7,17 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Users, Package, CheckSquare, ShoppingBag, ArrowRight } from "lucide-react";
 
 export default function AdminOverviewPage() {
-    const { data: users } = useFetch(() => userService.getAll(), []);
+    // const { data: users } = useFetch(() => userService.getAll(), []);
     const { data: batches } = useFetch(() => batchService.getAllAdmin(), []);
     const { data: orders } = useFetch(() => orderService.getAll(), []);
-
+    const { data: userCount } = useFetch(() => userService.getCount(), []);
     const pending = batches?.filter((b) => b.approval_status === "Pending") ?? [];
-    const revenue = orders?.reduce((s, o) => s + o.total_price, 0) ?? 0;
-
+    const revenue = orders?.filter((o) => o.status !== "Cancelled")
+        .reduce((s, o) => s + Number(o.total_price), 0) ?? 0;
     return (
         <div className="space-y-6">
             <div className="grid md:grid-cols-4 gap-4">
-                <Kpi icon={Users} label="Tổng người dùng" value={String(users?.length ?? 0)} />
-                <Kpi icon={Package} label="Lô hàng đang bán" value={String(batches?.filter((b) => b.approval_status === "Approved").length ?? 0)} />
+                <Kpi icon={Users} label="Tổng người dùng" value={String(userCount ?? 0)} />                <Kpi icon={Package} label="Lô hàng đang bán" value={String(batches?.filter((b) => b.approval_status === "Approved").length ?? 0)} />
                 <Kpi icon={CheckSquare} label="Chờ kiểm duyệt" value={String(pending.length)} highlight={pending.length > 0} sub="Ưu tiên xử lý trong 24h" />
                 <Kpi icon={ShoppingBag} label="Doanh thu" value={formatCurrency(revenue)} />
             </div>
@@ -31,7 +30,7 @@ export default function AdminOverviewPage() {
                 <div className="space-y-2">
                     {pending.slice(0, 6).map((b) => (
                         <Link key={b.id} to={`/admin/approvals/${b.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
-                            <img src={b.image} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                            {b?.image && <img src={b.image}className="w-10 h-10 rounded-lg object-cover" alt="" />}
                             <div className="flex-1 min-w-0">
                                 <div className="font-medium text-sm truncate">{b.product_name}</div>
                                 <div className="text-xs text-muted-foreground truncate">{b.farm_name} · {b.batch_code}</div>

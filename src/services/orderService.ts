@@ -1,6 +1,11 @@
 import api from "@/lib/axios";
 import type { ApiResponse } from "@/lib/axios";
-import type {CheckoutPayload, CheckoutResponse, Order, OrderDetail} from "@/types/order";
+import type {
+    CheckoutPayload,
+    CheckoutResponse,
+    Order,
+    OrderDetail,
+} from "@/types/order";
 
 export interface OrderWithDetails extends Order {
     details: OrderDetail[];
@@ -10,30 +15,63 @@ export interface CreateOrderPayload {
     receiver_name: string;
     receiver_phone: string;
     shipping_address: string;
-    items: { batch_id: number; quantity: number }[];
+    items: {
+        batch_id: number;
+        quantity: number;
+    }[];
 }
 
 export const orderService = {
-    create: (payload: CreateOrderPayload) =>
-        api.post("/orders", payload) as Promise<ApiResponse<Order>>,
+    create: async (payload: CreateOrderPayload): Promise<Order> => {
+        const response = await api.post(
+            "/orders",
+            payload
+        ) as ApiResponse<Order>;
 
-    checkout: (payload: CheckoutPayload) =>
-        api.post("/orders/checkout", payload) as Promise<CheckoutResponse>,
-    getMyOrders: (status?: string) =>
-        api.get("/orders", { params: { status } }) as Promise<ApiResponse<OrderWithDetails[]>>,
+        return response.data;
+    },
 
-    getById: (id: number) =>
-        api.get(`/orders/${id}`) as Promise<ApiResponse<OrderWithDetails>>,
+    checkout: async (payload: CheckoutPayload): Promise<CheckoutResponse> => {
+        const response = await api.post(
+            "/orders/checkout",
+            payload
+        ) as CheckoutResponse;
 
-    confirmReceived: (id: number) =>
-        api.put(`/orders/${id}/confirm`) as Promise<ApiResponse<Order>>,
+        return response;
+    },
 
-    getSellerOrders: (status?: string) =>
-        api.get("/orders/seller", { params: { status } }) as Promise<ApiResponse<OrderWithDetails[]>>,
+    getMyOrders: async (status?: string): Promise<OrderWithDetails[]> => {
+        const response = await api.get("/orders", { params: { status } });
+        return response as unknown as OrderWithDetails[];
+    },
 
-    getAll: (status?: string) =>
-        api.get("/orders", { params: { status } }) as Promise<ApiResponse<OrderWithDetails[]>>,
+    getById: async (id: number): Promise<OrderWithDetails> => {
+        const response = await api.get(`/orders/${id}`);
+        return response as unknown as OrderWithDetails;
+    },
 
-    updateStatus: (id: number, status: string) =>
-        api.put(`/orders/${id}/status`, { status }) as Promise<ApiResponse<Order>>,
+    confirmReceived: async (
+        id: number
+    ): Promise<Order> => {
+        const response = await api.put(
+            `/orders/${id}/confirm`
+        ) as ApiResponse<Order>;
+
+        return response.data;
+    },
+
+    getSellerOrders: async (status?: string): Promise<OrderWithDetails[]> => {
+        const response = await api.get("/orders/seller", { params: { status } });
+        return response as unknown as OrderWithDetails[];
+    },
+
+    getAll: async (status?: string): Promise<OrderWithDetails[]> => {
+        const response = await api.get("/orders/admin/all", { params: { status } });
+        return response as unknown as OrderWithDetails[];
+    },
+
+    updateStatus: async (id: number, status: string): Promise<Order> => {
+        const response = await api.put(`/orders/${id}/status`, { status });
+        return response as unknown as Order;
+    },
 };

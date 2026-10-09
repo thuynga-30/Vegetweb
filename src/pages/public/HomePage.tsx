@@ -404,40 +404,42 @@ export default function HomePage() {
 
                     <div className="grid md:grid-cols-3 gap-5">
 
-                        {farms.map((farm) => (
-                            <div
-                                key={farm.id}
-                                className="rounded-2xl overflow-hidden border bg-card"
-                            >
-                                <div className="aspect-[16/10] bg-muted">
-                                    <img
-                                        src={farm.image ?? "/placeholder-farm.jpg"}
-                                        alt={farm.farm_name}
-                                        loading="lazy"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-
-                                <div className="p-5">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <h3 className="font-semibold">
-                                            {farm.farm_name}
-                                        </h3>
+                        {farms.map((farm) => {
+                            return (
+                                <div
+                                    key={farm.id}
+                                    className="rounded-2xl overflow-hidden border bg-card"
+                                >
+                                    <div className="aspect-[16/10] bg-muted">
+                                        <img
+                                            src={farm.coverImage ?? "/placeholder-farm.jpg"}
+                                            alt={farm.farmName}
+                                            loading="lazy"
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
 
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
-                                        <MapPin className="w-3 h-3" />
-                                        <span className="line-clamp-1">
-                    {farm.address ?? "Chưa cập nhật địa chỉ"}
-                </span>
-                                    </div>
+                                    <div className="p-5">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <h3 className="font-semibold">
+                                                {farm.farmName}
+                                            </h3>
+                                        </div>
 
-                                    <p className="text-sm mt-2 text-muted-foreground line-clamp-2">
-                                        {farm.description ?? "Nông trại đối tác GreenFarmer"}
-                                    </p>
+                                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                                            <MapPin className="w-3 h-3"/>
+                                            <span className="line-clamp-1">
+                        {farm.address ?? "Chưa cập nhật địa chỉ"}
+                    </span>
+                                        </div>
+
+                                        <p className="text-sm mt-2 text-muted-foreground line-clamp-2">
+                                            {farm.description ?? "Nông trại đối tác GreenFarmer"}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
 
                     </div>
 

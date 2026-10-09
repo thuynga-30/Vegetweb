@@ -1,8 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { batchService } from "@/services/batchService";
+import { useFetch } from "@/hooks/useFetch";
+import { productService } from "@/services/productService";
+import { batchService} from "@/services/batchService";
 import { Plus, Trash2, UploadCloud, Award, ShieldCheck, Shield } from "lucide-react";
 import type { TrustLevel } from "@/types/batch";
+
 
 interface LogRow { log_date: string; activity: string; description: string }
 
@@ -26,9 +29,16 @@ const TRUST_PREVIEW: Record<TrustLevel, { title: string; desc: string; icon: typ
 
 export default function BatchCreatePage() {
     const navigate = useNavigate();
+    const { data: products } = useFetch(() => productService.getMyProducts(), []);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [form, setForm] = useState({ product_name: "", planting_date: "", harvest_date: "", quantity: "", price: "" });
-    const [logs, setLogs] = useState<LogRow[]>([{ log_date: "", activity: "", description: "" }]);
+
+    const [form, setForm] = useState({
+        product_id: "",
+        planting_date: "",
+        harvest_date: "",
+        quantity: "",
+        price: "",
+    });    const [logs, setLogs] = useState<LogRow[]>([{ log_date: "", activity: "", description: "" }]);
     const [imagePreview, setImagePreview] = useState<string>("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState<"draft" | "submit" | null>(null);
@@ -54,21 +64,63 @@ export default function BatchCreatePage() {
 
     const submit = async (mode: "draft" | "submit") => {
         setError("");
+
         if (mode === "draft") {
-            // Demo: lưu nháp chỉ giữ lại trên form, chưa gửi lên hệ thống — thực tế có thể lưu vào API riêng /batches/draft
+            alert(
+                "Đã lưu nháp lô hàng (chỉ lưu tạm trên trình duyệt, chưa gửi admin duyệt)."
+            );
+            return;
+        }
+
+        if (!form.product_id) {
+            setError("Vui lòng chọn sản phẩm.");
+            return;
+        }
+
+        setLoading(mode);
+
+        try {
+            await batchService.create({
+                productId: Number(form.product_id),
+                plantingDate: form.planting_date || undefined,
+                harvestDate: form.harvest_date,
+                quantity: Number(form.quantity),
+                cultivationLogs: logs
+                    .filter((l) => l.activity && l.log_date)
+                    .map((l) => ({
+                        activity: l.activity,
+                        description: l.description || undefined,
+                        logDate: l.log_date,
+                    })),
+            });
+
+            navigate("/seller/batches");
+        } catch (err: any) {
+            setError(err?.message ?? "Tạo lô hàng thất bại");
+        } finally {
+            setLoading(null);
+        }
+    };
+    async (mode: "draft" | "submit") => {
+        setError("");
+        if (mode === "draft") {
             alert("Đã lưu nháp lô hàng (chỉ lưu tạm trên trình duyệt, chưa gửi admin duyệt).");
             return;
         }
         setLoading(mode);
         try {
             await batchService.create({
-                product_name: form.product_name,
-                planting_date: form.planting_date,
-                harvest_date: form.harvest_date,
+                productId: Number(form.product_id),
+                plantingDate: form.planting_date,
+                harvestDate: form.harvest_date,
                 quantity: Number(form.quantity),
-                price: form.price ? Number(form.price) : undefined,
-                image: imagePreview || undefined,
-                logs: logs.filter((l) => l.activity && l.log_date),
+                cultivationLogs: logs
+                    .filter((l) => l.activity && l.log_date)
+                    .map((l) => ({
+                        activity: l.activity,
+                        description: l.description || undefined,
+                        logDate: l.log_date,
+                    })),
             });
             navigate("/seller/batches");
         } catch (err: any) {
@@ -87,13 +139,15 @@ export default function BatchCreatePage() {
                     <div className="bg-card border rounded-2xl p-6 space-y-4">
                         <h2 className="font-semibold">Thông tin lô hàng</h2>
                         <div>
-                            <label className="text-sm font-medium">Tên sản phẩm</label>
-                            <input
-                                required value={form.product_name}
-                                onChange={(e) => setForm({ ...form, product_name: e.target.value })}
-                                placeholder="VD: Xà lách Romaine Đà Lạt"
+                            <label className="text-sm font-medium">Sản phẩm</label>
+                            <select
+                                required value={form.product_id}
+                                onChange={(e) => setForm({ ...form, product_id: e.target.value })}
                                 className="w-full mt-1 px-3 py-2 rounded-lg border bg-background"
-                            />
+                            >
+                                <option value="">— Chọn sản phẩm —</option>
+                                {products?.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">

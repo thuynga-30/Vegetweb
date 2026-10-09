@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useFetch } from "@/hooks/useFetch";
 import { orderService } from "@/services/orderService";
-import { batchService } from "@/services/batchService";
+// import { batchService } from "@/services/batchService";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Check, X, ChevronDown, Phone, MapPin, StickyNote } from "lucide-react";
@@ -22,15 +22,15 @@ const APPROVED_STATUSES: OrderStatus[] = ["Confirmed", "Preparing", "Shipping", 
 export default function AdminOrdersPage() {
     const [tab, setTab] = useState<Tab>("Pending");
     const { data: orders, loading, refetch } = useFetch(() => orderService.getAll(), []);
-    const { data: batches } = useFetch(() => batchService.getAll(), []);
+    // const { data: batches } = useFetch(() => batchService.getAll(), []);
     const [actingId, setActingId] = useState<number | null>(null);
     const [expanded, setExpanded] = useState<number | null>(null);
 
-    const batchById = useMemo(() => {
-        const map = new Map<number, NonNullable<typeof batches>[number]>();
-        batches?.forEach((b) => map.set(b.id, b));
-        return map;
-    }, [batches]);
+    // const batchById = useMemo(() => {
+    //     const map = new Map<number, NonNullable<typeof batches>[number]>();
+    //     batches?.forEach((b) => map.set(b.id, b));
+    //     return map;
+    // }, [batches]);
 
     const filtered = useMemo(() => {
         if (!orders) return [];
@@ -73,8 +73,8 @@ export default function AdminOrdersPage() {
                     >
                         {t.label}
                         <span className={`text-xs ${tab === t.key ? "opacity-90" : "text-muted-foreground"}`}>
-              ({counts[t.key]})
-            </span>
+                            ({counts[t.key]})
+                        </span>
                     </button>
                 ))}
             </div>
@@ -96,9 +96,8 @@ export default function AdminOrdersPage() {
                     {filtered.map((o) => {
                         const isOpen = expanded === o.id;
                         return (
-                            <>
+                            <Fragment key={o.id}>
                                 <tr
-                                    key={o.id}
                                     onClick={() => setExpanded(isOpen ? null : o.id)}
                                     className="border-t cursor-pointer hover:bg-muted/30"
                                 >
@@ -140,34 +139,36 @@ export default function AdminOrdersPage() {
                                             <div className="grid md:grid-cols-[1fr_260px] gap-5">
                                                 {/* Danh sách sản phẩm trong đơn */}
                                                 <div className="space-y-2">
-                                                    {o.details?.map((d) => {
-                                                        const b = batchById.get(d.batch_id);
-                                                        return (
-                                                            <div key={d.id} className="flex items-center gap-3 bg-card border rounded-xl p-2.5">
-                                                                {b?.image && <img src={b.image} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />}
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-medium text-sm truncate">{b?.product_name ?? `Lô hàng #${d.batch_id}`}</div>
-                                                                    <div className="text-xs text-muted-foreground truncate">
-                                                                        {b?.farm_name} · Mã lô {b?.batch_code} · SL: {d.quantity}
-                                                                    </div>
+                                                    {o.details?.map((d) => (
+                                                        <div key={d.id}
+                                                             className="flex items-center gap-3 bg-card border rounded-xl p-2.5">
+                                                            {d.image && <img src={d.image} alt=""
+                                                                             className="w-12 h-12 rounded-lg object-cover flex-shrink-0"/>}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div
+                                                                    className="font-medium text-sm truncate">{d.product_name ?? `Lô hàng #${d.batch_id}`}</div>
+                                                                <div className="text-xs text-muted-foreground truncate">
+                                                                    {d.farm_name} · Mã lô {d.batch_code} ·
+                                                                    SL: {d.quantity}
                                                                 </div>
-                                                                <div className="font-semibold text-sm">{formatCurrency(d.price * d.quantity)}</div>
                                                             </div>
-                                                        );
-                                                    })}
+                                                            <div
+                                                                className="font-semibold text-sm">{formatCurrency((d.price ?? 0) * d.quantity)}</div>
+                                                        </div>
+                                                    ))}
                                                     {(!o.details || o.details.length === 0) && (
-                                                        <p className="text-xs text-muted-foreground">Không có chi tiết sản phẩm.</p>
+                                                        <p className="text-xs text-muted-foreground">Không có chi tiết
+                                                            sản phẩm.</p>
                                                     )}
                                                 </div>
-
                                                 {/* Thông tin giao hàng */}
                                                 <div className="bg-card border rounded-xl p-3 space-y-2 text-sm h-fit">
                                                     <div className="flex items-start gap-2">
-                                                        <Phone className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
+                                                        <Phone className="w-3.5 h-3.5 text-muted-foreground mt-0.5"/>
                                                         <span>{o.receiver_phone}</span>
                                                     </div>
                                                     <div className="flex items-start gap-2">
-                                                        <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
+                                                        <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5"/>
                                                         <span>{o.shipping_address}</span>
                                                     </div>
                                                     {o.tracking_note && (
@@ -185,7 +186,7 @@ export default function AdminOrdersPage() {
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </Fragment>
                         );
                     })}
                     </tbody>

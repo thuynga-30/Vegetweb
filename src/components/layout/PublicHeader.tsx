@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { Leaf, ShoppingCart, User, ScanLine, LayoutDashboard, Menu } from "lucide-react";
+import { Leaf, ShoppingCart, User, ScanLine, Menu } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -33,10 +33,10 @@ export function PublicHeader() {
 
                 <div className="flex-1" />
 
-                <Link to="/seller" className="hidden md:inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-                    <LayoutDashboard className="w-4 h-4" /> Kênh nông dân
-                </Link>
-                <Link to="/admin" className="hidden md:inline-flex text-xs text-muted-foreground hover:text-primary">Admin</Link>
+                {/*<Link to="/seller" className="hidden md:inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">*/}
+                {/*    <LayoutDashboard className="w-4 h-4" /> Kênh nông dân*/}
+                {/*</Link>*/}
+                {/*<Link to="/admin" className="hidden md:inline-flex text-xs text-muted-foreground hover:text-primary">Admin</Link>*/}
                 <Link to="/cart" className="relative p-2 rounded-lg hover:bg-muted">
                     <ShoppingCart className="w-5 h-5" />
                     {totalItems > 0 && (

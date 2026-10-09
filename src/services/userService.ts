@@ -2,10 +2,29 @@ import api from "@/lib/axios";
 import type { ApiResponse } from "@/lib/axios";
 import type { User } from "@/types/user";
 
+// Backend: 'active' | 'locked'  ->  Frontend: "Active" | "Disabled"
+const toUser = (u: any): User => ({
+    ...u,
+    status: u.status === "locked" ? "Disabled" : "Active",
+});
+
 export const userService = {
-    getAll: (role?: string) => api.get("/users", { params: { role } }) as Promise<ApiResponse<User[]>>,
+    getAll: async (role?: string): Promise<User[]> => {
+        const response = await api.get("/admin/users", {
+            params: { role: role || undefined, limit: 100 },
+        }) as ApiResponse<{ items: any[] }>;
 
-    disable: (id: number) => api.put(`/users/${id}/disable`) as Promise<ApiResponse<User>>,
+        return response.data.items.map(toUser);
+    },
 
-    enable: (id: number) => api.put(`/users/${id}/enable`) as Promise<ApiResponse<User>>,
+    getCount: async (): Promise<number> => {
+        const response = await api.get("/admin/users", {
+            params: { limit: 1 },
+        }) as ApiResponse<{ meta: { total: number } }>;
+        return response.data.meta.total;
+    },
+
+    disable: (id: number) => api.patch(`/admin/users/${id}/lock`),
+
+    enable: (id: number) => api.patch(`/admin/users/${id}/unlock`),
 };

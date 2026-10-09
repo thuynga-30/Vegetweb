@@ -5,26 +5,63 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { MapPin } from "lucide-react";
 
 export default function FarmsPage() {
-    const { data: farms, loading } = useFetch(() => farmService.getAll(), []);
-
+    const { data: farms, loading } = useFetch(
+        () => farmService.getAllAdmin(),
+        []
+    );
     return (
         <div className="grid md:grid-cols-3 gap-4">
             {farms?.map((f) => (
-                <Link key={f.id} to={`/admin/farms/${f.id}`} className="bg-card border rounded-2xl overflow-hidden hover:border-primary transition">
-                    <img src={f.image} className="aspect-video w-full object-cover bg-muted" alt="" />
+                <Link
+                    key={f.id}
+                    to={`/admin/farms/${f.id}`}
+                    className="bg-card border rounded-2xl overflow-hidden hover:border-primary transition"
+                >
+                    {f.coverImage? (
+                        <img
+                            src={f.coverImage}
+                            className="aspect-video w-full object-cover bg-muted"
+                            alt={f.farmName}
+                        />
+                    ) : (
+                        <div className="aspect-video w-full bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                            Chưa có ảnh
+                        </div>
+                    )}
+
                     <div className="p-5">
                         <div className="flex items-center justify-between gap-2">
-                            <h3 className="font-semibold">{f.farm_name}</h3>
-                            <StatusBadge status={f.approval_status ?? "Pending"} />
+                            <h3 className="font-semibold">
+                                {f.farmName}
+                            </h3>
+
+                            <StatusBadge
+                                status={
+                                    f.status === "pending"
+                                        ? "Pending"
+                                        : f.status === "approved"
+                                            ? "Approved"
+                                            : "Rejected"
+                                }
+                            />
                         </div>
-                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1"><MapPin className="w-3 h-3" />{f.address}</div>
-                        <div className="mt-2 text-xs">Chủ: <b>{f.owner_name}</b></div>
-                        <p className="text-sm mt-2 text-muted-foreground line-clamp-2">{f.description}</p>
+
+                        <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {f.address}
+                        </div>
+
+                        <p className="text-sm mt-2 text-muted-foreground line-clamp-2">
+                            {f.description}
+                        </p>
                     </div>
                 </Link>
             ))}
+
             {!loading && (!farms || farms.length === 0) && (
-                <p className="text-sm text-muted-foreground col-span-3 text-center py-10">Chưa có nông trại nào đăng ký.</p>
+                <p className="text-sm text-muted-foreground col-span-3 text-center py-10">
+                    Chưa có nông trại nào đăng ký.
+                </p>
             )}
         </div>
     );

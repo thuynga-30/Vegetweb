@@ -3,26 +3,36 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pi
 import { useFetch } from "@/hooks/useFetch";
 import { orderService } from "@/services/orderService";
 import { batchService } from "@/services/batchService";
-import { formatDate } from "@/lib/utils";
 
 export default function ReportsPage() {
     const { data: orders } = useFetch(() => orderService.getAll(), []);
-    const { data: batches } = useFetch(() => batchService.getAll(), []);
-
+    // Lưu ý: nếu batchService.getAll() trả 403 cho admin, đổi sang hàm admin
+    // mà trang "Kiểm duyệt lô hàng" đang dùng (ví dụ batchService.getAllAdmin()).
+    const { data: batches } = useFetch(() => batchService.getAllAdmin(), []);
     const monthly = useMemo(() => {
         if (!orders) return [];
         const map = new Map<string, number>();
         orders.forEach((o) => {
-            const key = formatDate(o.created_at).slice(3); // MM/YYYY
+            if (o.status === "Cancelled") return; // không tính đơn đã hủy/từ chối
+            const d = new Date(o.created_at);
+            if (isNaN(d.getTime())) return;
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
             map.set(key, (map.get(key) ?? 0) + 1);
         });
-        return Array.from(map.entries()).map(([m, orders]) => ({ m, orders }));
+        return Array.from(map.entries())
+            .sort(([a], [b]) => a.localeCompare(b)) // sắp xếp theo thời gian tăng dần
+            .map(([key, count]) => {
+                const [y, m] = key.split("-");
+                return { m: `${m}/${y}`, orders: count };
+            });
     }, [orders]);
 
     const trustPie = useMemo(() => {
         if (!batches) return [];
         const count = { Low: 0, Medium: 0, High: 0 } as Record<string, number>;
-        batches.forEach((b) => { count[b.trust_level] = (count[b.trust_level] ?? 0) + 1; });
+        batches.forEach((b) => {
+            count[b.trust_level] = (count[b.trust_level] ?? 0) + 1;
+        });
         return [
             { name: "Vàng (Cấp 3)", value: count.High, color: "oklch(0.8 0.17 85)" },
             { name: "Bạc (Cấp 2)", value: count.Medium, color: "oklch(0.75 0.02 240)" },
@@ -37,7 +47,8 @@ export default function ReportsPage() {
                 <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={monthly}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="m" /><YAxis />
+                        <XAxis dataKey="m" />
+                        <YAxis allowDecimals={false} />
                         <Tooltip />
                         <Bar dataKey="orders" fill="var(--color-primary)" radius={[6, 6, 0, 0]} />
                     </BarChart>

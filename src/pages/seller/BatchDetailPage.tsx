@@ -5,8 +5,10 @@ import { batchService } from "@/services/batchService";
 import { TrustBadge } from "@/components/common/TrustBadge";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { QRCode } from "@/components/common/QRCode";
+import { buildTraceUrl } from "@/lib/trace";
 import { formatDate } from "@/lib/utils";
 import { Plus, Download, Printer, X, Loader2 } from "lucide-react";
+
 
 export default function BatchDetailPage() {
     const { id } = useParams();
@@ -63,14 +65,26 @@ export default function BatchDetailPage() {
             <div className="md:col-span-2 space-y-5">
                 <div className="bg-card border rounded-2xl p-5">
                     <div className="flex items-start gap-4">
-                        <img src={batch.image} className="w-24 h-24 rounded-xl object-cover" alt="" />
+                        {batch.image ? (
+                            <img
+                                src={batch.image}
+                                className="w-24 h-24 rounded-xl object-cover"
+                                alt=""
+                            />
+                        ) : (
+                            <div className="w-24 h-24 rounded-xl bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                Chưa có ảnh
+                            </div>
+                        )}
                         <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                                 <h2 className="text-xl font-bold">{batch.product_name}</h2>
                                 <StatusBadge status={batch.approval_status} />
                                 <TrustBadge level={batch.trust_level} size="sm" />
                             </div>
-                            <div className="text-xs text-muted-foreground font-mono mt-1">{batch.batch_code}</div>
+                            <div className="text-xs text-muted-foreground font-mono mt-1">
+                                {batch.barcode ?? "Chưa có mã (chờ admin duyệt)"}
+                            </div>
                             <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
                                 <Info label="Gieo" value={formatDate(batch.planting_date)} />
                                 <Info label="Thu hoạch" value={formatDate(batch.harvest_date)} />
@@ -163,16 +177,28 @@ export default function BatchDetailPage() {
                     )}
                 </div>
             </div>
-
+            {/* qr */}
             <aside className="space-y-4">
                 <div className="bg-card border rounded-2xl p-5 text-center">
                     <h3 className="font-semibold mb-3">Mã QR truy xuất</h3>
-                    <div className="inline-block"><QRCode value={batch.batch_code} /></div>
-                    <div className="font-mono text-xs mt-2">{batch.batch_code}</div>
-                    <div className="mt-4 flex gap-2">
-                        <button className="flex-1 border rounded-lg py-2 text-sm flex items-center justify-center gap-1"><Download className="w-4 h-4" /> Tải</button>
-                        <button className="flex-1 border rounded-lg py-2 text-sm flex items-center justify-center gap-1"><Printer className="w-4 h-4" /> In tem</button>
-                    </div>
+                    {batch.approval_status === "Approved" && batch.barcode ? (
+                        <>
+                            <div className="inline-block">
+                                <QRCode value={buildTraceUrl(batch.barcode)} />
+                            </div>
+                            <div className="font-mono text-xs mt-2">{batch.barcode}</div>
+                            <div className="mt-4 flex gap-2">
+                                <button className="flex-1 border rounded-lg py-2 text-sm flex items-center justify-center gap-1"><Download className="w-4 h-4" /> Tải</button>
+                                <button className="flex-1 border rounded-lg py-2 text-sm flex items-center justify-center gap-1"><Printer className="w-4 h-4" /> In tem</button>
+                            </div>
+                        </>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            {batch.approval_status === "Pending"
+                                ? "QR sẽ xuất hiện sau khi admin duyệt lô hàng."
+                                : "Lô hàng đã bị từ chối, không có mã QR."}
+                        </p>
+                    )}
                 </div>
             </aside>
         </div>
