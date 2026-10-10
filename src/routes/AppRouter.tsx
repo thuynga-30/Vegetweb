@@ -32,6 +32,7 @@ import FarmApprovalDetailPage from "@/pages/admin/FarmApprovalDetailPage";
 import AdminOrdersPage from "@/pages/admin/AdminOrdersPage";
 import ReportsPage from "@/pages/admin/ReportsPage";
 import PaymentResultPage from "@/pages/public/PaymentResultPage";
+import SellerFarmsPage from "@/pages/seller/SellerFarmsPage.tsx";
 
 export default function AppRouter() {
     return (
@@ -58,7 +59,8 @@ export default function AppRouter() {
                 <Route element={<ProtectedRoute allow={["seller"]} />}>
                     <Route element={<SellerLayout />}>
                         <Route path="/seller" element={<SellerOverviewPage />} />
-                        <Route path="/seller/farm" element={<FarmProfilePage />} />
+                        <Route path="/seller/farms" element={<SellerFarmsPage />} />
+                        <Route path="/seller/farms/:id" element={<FarmProfilePage />} />
                         <Route path="/seller/batches" element={<BatchListPage />} />
                         <Route path="/seller/batches/new" element={<BatchCreatePage />} />
                         <Route path="/seller/batches/:id" element={<BatchDetailPage />} />

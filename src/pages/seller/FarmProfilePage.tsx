@@ -1,48 +1,72 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import { useFetch } from "@/hooks/useFetch";
 import { farmService } from "@/services/farmService";
-import type { Certification } from "@/types/farm";
-import { MapPin, Save, Award, ShieldCheck, Upload, X } from "lucide-react";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import { MapPin, Save, Award, Upload, X, ArrowLeft } from "lucide-react";
 
 export default function FarmProfilePage() {
-    const { data: farm, loading, refetch } = useFetch(() => farmService.getMyFarm(), []);
+    const { id } = useParams<{ id: string }>();
+    const farmId = Number(id);
+    const { data: farm, loading, refetch } = useFetch(
+        () => (Number.isFinite(farmId) ? farmService.getMyFarm(farmId) : Promise.resolve(null)),
+        [farmId],
+    );
 
     const [form, setForm] = useState({
         farm_name: "", owner_name: "", address: "", description: "",
-        image: "", area_ha: "", farming_method: "",
+        area_ha: "", farming_method: "",
     });
-    const [certifications, setCertifications] = useState<Certification[]>([]);
+    const [coverFile, setCoverFile] = useState<File | null>(null);
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState("");
-    const [showCertForm, setShowCertForm] = useState(false);
-    const [newCertName, setNewCertName] = useState("");
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (farm) {
             setForm({
-                farm_name: farm.farmName ?? "",
-                owner_name: farm.ownerName ?? "",
+                farm_name: farm.farm_name ?? "",
+                owner_name: farm.owner_name ?? "",
                 address: farm.address ?? "",
                 description: farm.description ?? "",
-                image: farm.images[0]?? "",
-                area_ha: farm.areaHa != null ? String(farm.areaHa) : "",
-                farming_method: farm.farmingMethod ?? "",
+                area_ha: farm.area_ha != null ? String(farm.area_ha) : "",
+                farming_method: farm.farming_method ?? "",
             });
-            // setCertifications(farm.certifications ?? []);
         }
     }, [farm]);
 
+    // Giải phóng URL tạm khi đổi/đóng
+    useEffect(() => {
+        return () => {
+            if (coverPreview) URL.revokeObjectURL(coverPreview);
+        };
+    }, [coverPreview]);
+
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!farm) return;
         setSaving(true);
         setMessage("");
         try {
-            await farmService.updateMyFarm({
-                ...form,
+            // 1. Cập nhật thông tin (chỉ gửi các trường backend nhận)
+            await farmService.updateMyFarm(farm.id, {
+                farm_name: form.farm_name,
+                owner_name: form.owner_name,
+                address: form.address,
+                description: form.description,
                 area_ha: form.area_ha ? Number(form.area_ha) : undefined,
-                certifications,
+                farming_method: form.farming_method,
             });
+
+            // 2. Đổi ảnh bìa: tải ảnh mới lên rồi mới xóa ảnh cũ
+            if (coverFile) {
+                await farmService.uploadImage(farm.id, coverFile, "Farm");
+                if (farm.cover) await farmService.deleteImage(farm.cover.id);
+                setCoverFile(null);
+                setCoverPreview(null);
+            }
+
             setMessage("Đã lưu hồ sơ trang trại.");
             refetch();
         } catch (err: any) {
@@ -52,22 +76,54 @@ export default function FarmProfilePage() {
         }
     };
 
-    const addCertification = () => {
-        if (!newCertName.trim()) return;
-        // Chứng nhận mới tải lên sẽ ở trạng thái "Chờ xác minh" cho tới khi Admin duyệt
-        setCertifications((c) => [...c, { name: newCertName.trim(), verified: false }]);
-        setNewCertName("");
-        setShowCertForm(false);
+    const uploadCertificate = async (file: File) => {
+        if (!farm) return;
+        setUploading(true);
+        setMessage("");
+        try {
+            await farmService.uploadImage(farm.id, file, "Certifi");
+            setMessage("Đã tải chứng nhận lên.");
+            refetch();
+        } catch (err: any) {
+            setMessage(err?.message ?? "Tải chứng nhận thất bại");
+        } finally {
+            setUploading(false);
+        }
     };
 
-    const removeCertification = (name: string) => {
-        setCertifications((c) => c.filter((cert) => cert.name !== name));
+    const removeCertificate = async (imageId: number) => {
+        if (!window.confirm("Xóa chứng nhận này?")) return;
+        try {
+            await farmService.deleteImage(imageId);
+            refetch();
+        } catch (err: any) {
+            setMessage(err?.message ?? "Xóa thất bại");
+        }
     };
 
     if (loading) return <p className="text-muted-foreground">Đang tải...</p>;
 
+    if (!farm) {
+        return (
+            <div className="space-y-3">
+                <Link to="/seller/farms" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+                    <ArrowLeft className="w-4 h-4" /> Danh sách trang trại
+                </Link>
+                <p className="text-muted-foreground">Không tìm thấy trang trại.</p>
+            </div>
+        );
+    }
+
+    const coverSrc = coverPreview ?? farm.cover?.url ?? null;
+    const statusLabel =
+        farm.status === "approved" ? "Approved" : farm.status === "rejected" ? "Rejected" : "Pending";
+
     return (
         <div className="max-w-6xl mx-auto space-y-5">
+            <Link to="/seller/farms" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
+                <ArrowLeft className="w-4 h-4" /> Danh sách trang trại
+            </Link>
+
             {message && (
                 <div className="bg-primary/10 text-primary text-sm rounded-xl px-4 py-2.5">{message}</div>
             )}
@@ -77,20 +133,33 @@ export default function FarmProfilePage() {
                 <div className="space-y-5">
                     <div className="bg-card border rounded-2xl overflow-hidden">
                         <div className="aspect-[16/7] bg-muted relative">
-                            <img src={form.image} alt={form.farm_name} className="w-full h-full object-cover" />
+                            {coverSrc ? (
+                                <img src={coverSrc} alt={form.farm_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                                    Chưa có ảnh bìa
+                                </div>
+                            )}
                             <label className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer hover:bg-black/70">
                                 <Upload className="w-3.5 h-3.5" /> Đổi ảnh bìa
                                 <input
                                     type="file" accept="image/*" className="hidden"
                                     onChange={(e) => {
                                         const file = e.target.files?.[0];
-                                        if (file) setForm((f) => ({ ...f, image: URL.createObjectURL(file) }));
+                                        if (file) {
+                                            setCoverFile(file);
+                                            setCoverPreview(URL.createObjectURL(file));
+                                        }
+                                        e.target.value = "";
                                     }}
                                 />
                             </label>
                         </div>
                         <div className="p-5">
-                            <h2 className="text-xl font-bold">{form.farm_name || "Chưa đặt tên trang trại"}</h2>
+                            <div className="flex items-center justify-between gap-2">
+                                <h2 className="text-xl font-bold">{form.farm_name || "Chưa đặt tên trang trại"}</h2>
+                                <StatusBadge status={statusLabel} />
+                            </div>
                             <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                                 <MapPin className="w-4 h-4" /> {form.address || "Chưa cập nhật địa chỉ"}
                             </div>
@@ -99,7 +168,6 @@ export default function FarmProfilePage() {
                             <div className="grid grid-cols-3 gap-3 mt-4">
                                 <Info label="Diện tích" value={form.area_ha ? `${form.area_ha} ha` : "—"} />
                                 <Info label="Phương pháp" value={form.farming_method || "—"} />
-                                {/*<Info label="Tọa độ GPS" value={farm?.gps_lat ? `${farm.gps_lat}, ${farm.gps_lng}` : "—"} />*/}
                             </div>
                         </div>
                     </div>
@@ -127,70 +195,43 @@ export default function FarmProfilePage() {
                     </form>
                 </div>
 
-                {/* Cột phải: chứng nhận + điểm uy tín */}
+                {/* Cột phải: chứng nhận */}
                 <div className="space-y-5">
                     <div className="bg-card border rounded-2xl p-5">
-                        <h3 className="font-semibold flex items-center gap-2 mb-3"><Award className="w-4 h-4 text-primary" /> Chứng nhận</h3>
-                        <div className="space-y-2">
-                            {certifications.map((c) => (
-                                <div key={c.name} className="flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm group">
-                                    <span>{c.name}</span>
-                                    <div className="flex items-center gap-2">
-                                        {c.verified ? (
-                                            <span className="flex items-center gap-1 text-xs text-primary"><ShieldCheck className="w-3.5 h-3.5" /> Đã xác minh</span>
-                                        ) : (
-                                            <span className="text-xs text-amber-600">Chờ xác minh</span>
-                                        )}
-                                        <button type="button" onClick={() => removeCertification(c.name)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive">
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
+                        <h3 className="font-semibold flex items-center gap-2 mb-3">
+                            <Award className="w-4 h-4 text-primary" /> Chứng nhận
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            {farm.certificates.map((c) => (
+                                <div key={c.id} className="relative group rounded-lg overflow-hidden border aspect-[4/3] bg-muted">
+                                    <img src={c.url} alt="Chứng nhận" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        onClick={() => removeCertificate(c.id)}
+                                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive"
+                                    >
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
                                 </div>
                             ))}
-                            {certifications.length === 0 && <p className="text-xs text-muted-foreground">Chưa có chứng nhận nào.</p>}
                         </div>
-
-                        {showCertForm ? (
-                            <div className="mt-3 space-y-2">
-                                <input
-                                    autoFocus value={newCertName} onChange={(e) => setNewCertName(e.target.value)}
-                                    placeholder="Tên chứng nhận (VD: GlobalGAP)"
-                                    className="w-full px-3 py-2 rounded-lg border bg-background text-sm"
-                                />
-                                <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="w-full text-xs" />
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={addCertification} className="flex-1 bg-primary text-primary-foreground py-1.5 rounded-lg text-sm font-medium">Thêm</button>
-                                    <button type="button" onClick={() => setShowCertForm(false)} className="flex-1 border py-1.5 rounded-lg text-sm">Hủy</button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                type="button" onClick={() => setShowCertForm(true)}
-                                className="w-full mt-3 border-2 border-dashed rounded-lg py-2.5 text-sm text-muted-foreground hover:border-primary hover:text-primary flex items-center justify-center gap-2"
-                            >
-                                <Upload className="w-4 h-4" /> Tải chứng nhận mới
-                            </button>
+                        {farm.certificates.length === 0 && (
+                            <p className="text-xs text-muted-foreground">Chưa có chứng nhận nào.</p>
                         )}
-                    </div>
 
-                    {/*<div className="bg-card border rounded-2xl p-5">*/}
-                    {/*    <h3 className="font-semibold flex items-center gap-2 mb-3"><TrendingUp className="w-4 h-4 text-primary" /> Điểm uy tín</h3>*/}
-                    {/*    <div className="text-3xl font-bold text-primary">{farm?.trust_score ?? "—"}<span className="text-base text-muted-foreground">/5</span></div>*/}
-                    {/*    <p className="text-xs text-muted-foreground mt-1">Dựa trên đơn hàng và đánh giá của người mua</p>*/}
-                    {/*    <div className="mt-4 space-y-3">*/}
-                    {/*        {(farm?.trust_metrics ?? []).map((m) => (*/}
-                    {/*            <div key={m.label}>*/}
-                    {/*                <div className="flex justify-between text-xs mb-1">*/}
-                    {/*                    <span className="text-muted-foreground">{m.label}</span>*/}
-                    {/*                    <span className="font-medium">{m.percent}%</span>*/}
-                    {/*                </div>*/}
-                    {/*                <div className="h-1.5 rounded-full bg-muted overflow-hidden">*/}
-                    {/*                    <div className="h-full bg-primary rounded-full" style={{ width: `${m.percent}%` }} />*/}
-                    {/*                </div>*/}
-                    {/*            </div>*/}
-                    {/*        ))}*/}
-                    {/*    </div>*/}
-                    {/*</div>*/}
+                        <label className="w-full mt-3 border-2 border-dashed rounded-lg py-2.5 text-sm text-muted-foreground hover:border-primary hover:text-primary flex items-center justify-center gap-2 cursor-pointer">
+                            <Upload className="w-4 h-4" /> {uploading ? "Đang tải lên..." : "Tải chứng nhận mới"}
+                            <input
+                                type="file" accept="image/*" className="hidden" disabled={uploading}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) uploadCertificate(file);
+                                    e.target.value = "";
+                                }}
+                            />
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

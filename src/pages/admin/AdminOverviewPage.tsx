@@ -12,7 +12,8 @@ export default function AdminOverviewPage() {
     const { data: orders } = useFetch(() => orderService.getAll(), []);
     const { data: userCount } = useFetch(() => userService.getCount(), []);
     const pending = batches?.filter((b) => b.approval_status === "Pending") ?? [];
-    const revenue = orders?.filter((o) => o.status !== "Cancelled")
+    const revenue =
+        orders?.filter((o) => ["Delivered", "Completed"].includes(o.status))
         .reduce((s, o) => s + Number(o.total_price), 0) ?? 0;
     return (
         <div className="space-y-6">

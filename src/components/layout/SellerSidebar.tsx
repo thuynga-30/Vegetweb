@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const menu = [
     { to: "/seller", label: "Tổng quan", icon: Home, end: true },
-    { to: "/seller/farm", label: "Hồ sơ trang trại", icon: MapPin },
+    { to: "/seller/farms", label: "Hồ sơ trang trại", icon: MapPin },
     { to: "/seller/batches", label: "Lô hàng", icon: Package },
     { to: "/seller/orders", label: "Đơn hàng", icon: ShoppingBag },
 ];

@@ -1,4 +1,4 @@
-import api, {type ApiResponse} from "@/lib/axios";
+import api from "@/lib/axios";
 import type {
     ProductDetail,
     GetProductsParams,
@@ -12,9 +12,21 @@ export const productService = {
     getById: (id: number) =>
         api.get(`/products/${id}`) as Promise<ProductDetail>,
     getMyProducts: async (): Promise<Product[]> => {
-        const response = await api.get("/seller/products") as ApiResponse<Product[]>;
-        return response.data;
+        return (await api.get("/seller/products")) as unknown as Product[];
     },
-    create: (payload: { category_id: number; name: string; description?: string; price: number }) =>
-        api.post("/seller/products", payload) as Promise<ApiResponse<Product>>,
+    create: async (payload: {
+        category_id: number;
+        name: string;
+        description?: string;
+        price: number;
+        farm_id?: number;
+    }): Promise<Product> => {
+        return (await api.post("/seller/products", {
+            categoryId: Number(payload.category_id),
+            farmId: payload.farm_id,
+            name: payload.name,
+            description: payload.description || undefined,
+            price: Number(payload.price),
+        })) as unknown as Product;
+    },
 };

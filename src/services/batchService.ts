@@ -4,18 +4,13 @@ import type {
     Batch,
     CultivationLog,
     BatchImage,
-    BatchFilter, BatchListItem, CreateBatchPayload, BatchTraceData,
+    BatchFilter,
+    BatchListItem,
+    CreateBatchPayload,
+    BatchTraceData,
 } from "@/types/batch";
 import { mapApiBatchToListItem } from "@/lib/batchMapper";
-// const toListItem = (b: any): BatchListItem => ({
-//     ...b,
-//     product_id: b.product?.id,
-//     product_name: b.product?.name ?? "",
-//     farm_id: b.product?.farm?.id,
-//     farm_name: b.product?.farm?.farm_name ?? "",
-//     price: Number(b.product?.price ?? 0),
-//     image: b.images?.[0]?.image_url ?? null,
-// });
+
 export const batchService = {
     getAll: async (filter?: BatchFilter): Promise<BatchListItem[]> => {
         const response = await api.get("/batches", {
@@ -24,104 +19,60 @@ export const batchService = {
 
         return response.data;
     },
-    // Admin: toàn bộ lô hàng bất kể trạng thái duyệt (Pending/Approved/Rejected)
-    getAllAdmin: async () => {
-        const response = await api.get("/batches/admin/all");
-        return response as unknown as Batch[];
-    },
-    getById: async (id: number): Promise<BatchListItem> => {
-        const response = await api.get(`/batches/${id}`) as ApiResponse<BatchListItem>;
 
-        return response.data;
+    // Admin: toàn bộ lô hàng bất kể trạng thái duyệt
+    getAllAdmin: async (): Promise<BatchListItem[]> => {
+        const list = (await api.get("/admin/batches")) as unknown as any[];
+        return list.map(mapApiBatchToListItem);
     },
+
+    // Seller: chi tiết 1 lô của mình
+    getById: async (id: number): Promise<BatchListItem> => {
+        const raw = (await api.get(`/batches/${id}`)) as unknown as any;
+        return mapApiBatchToListItem(raw);
+    },
+
+    // Seller: danh sách lô của mình (backend: GET /batches)
     getMyBatches: async (): Promise<BatchListItem[]> => {
         const list = (await api.get("/batches")) as unknown as any[];
         return list.map(mapApiBatchToListItem);
     },
+
     getTraceByCode: (batchCode: string) =>
         api.get(`/batches/code/${batchCode}`) as Promise<BatchTraceData>,
 
     create: async (payload: CreateBatchPayload): Promise<Batch> => {
-        const response = await api.post(
-            "/batches",
-            payload
-        ) as ApiResponse<Batch>;
-
-        return response.data;
-    },
-    update: async (
-        id: number,
-        payload: Partial<Batch>
-    ): Promise<Batch> => {
-        const response = await api.put(
-            `/batches/${id}`,
-            payload
-        ) as ApiResponse<Batch>;
-
-        return response.data;
-    },
-    uploadImages: async (
-        id: number,
-        formData: FormData
-    ): Promise<BatchImage[]> => {
-        const response = await api.post(
-            `/batches/${id}/images`,
-            formData,
-            {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            }
-        ) as ApiResponse<BatchImage[]>;
-
-        return response.data;
-    },
-    approve: async (
-        id: number,
-        note?: string
-    ): Promise<Batch> => {
-        const response = await api.put(
-            `/batches/${id}/approve`,
-            { note }
-        ) as ApiResponse<Batch>;
-
-        return response.data;
+        return (await api.post("/batches", payload)) as unknown as Batch;
     },
 
-    reject: async (
-        id: number,
-        note: string
-    ): Promise<Batch> => {
-        const response = await api.put(
-            `/batches/${id}/reject`,
-            { note }
-        ) as ApiResponse<Batch>;
-
-        return response.data;
+    update: async (id: number, payload: Partial<Batch>): Promise<Batch> => {
+        return (await api.patch(`/batches/${id}`, payload)) as unknown as Batch;
     },
 
+    // Không tự đặt Content-Type, để trình duyệt thêm boundary
+    uploadImages: async (id: number, formData: FormData): Promise<BatchImage[]> => {
+        return (await api.post(`/batches/${id}/images`, formData)) as unknown as BatchImage[];
+    },
+
+    // Nhật ký nằm sẵn trong GET /batches/:id (cultivationLogs)
     getLogs: async (id: number): Promise<CultivationLog[]> => {
-        const response = await api.get(
-            `/batches/${id}/logs`
-        ) as ApiResponse<CultivationLog[]>;
-
-        return response.data;
+        const raw = (await api.get(`/batches/${id}`)) as unknown as any;
+        return (raw.cultivationLogs ?? [])
+            .map((l: any) => ({
+                id: l.id,
+                batch_id: id,
+                activity: l.activity,
+                description: l.description ?? undefined,
+                image: l.image ?? undefined,
+                log_date: l.log_date,
+            }))
+            .sort((a: any, b: any) => String(a.log_date).localeCompare(String(b.log_date)));
     },
 
     addLog: async (
         id: number,
-        payload: {
-            log_date: string;
-            activity: string;
-            description?: string;
-            image?: string;
-        }
+        payload: { log_date: string; activity: string; description?: string; image?: string }
     ): Promise<CultivationLog> => {
-        const response = await api.post(
-            `/batches/${id}/logs`,
-            payload
-        ) as ApiResponse<CultivationLog>;
-
-        return response.data;
+        return (await api.post(`/batches/${id}/logs`, payload)) as unknown as CultivationLog;
     },
 };

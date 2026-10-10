@@ -20,7 +20,7 @@ export default function SellerOverviewPage() {
     //tính doanh thu
     const revenue =
         orders
-            ?.filter((o) => o.status !== "Cancelled")
+            ?.filter((o) => ["Delivered", "Completed"].includes(o.status))
             .reduce((s, o) => s + (o.seller_total ?? 0), 0) ?? 0;
 
     if (lb || lo) {
@@ -80,7 +80,7 @@ export default function SellerOverviewPage() {
                             <span>#{o.id} · {o.receiver_name}</span>
                             <div className="flex items-center gap-3">
                                 <StatusBadge status={o.status} />
-                                <span className="font-semibold">{formatCurrency(o.total_price)}</span>
+                                <span className="font-semibold">{formatCurrency(o.seller_total ?? o.total_price ?? 0)}</span>
                             </div>
                         </div>
                     ))}

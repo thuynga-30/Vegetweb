@@ -111,3 +111,21 @@ export interface FarmPayload {
     area_ha?: number;
     farming_method?: string;
 }
+export interface FarmImageItem {
+    id: number;
+    url: string;
+    type: "Farm" | "Certifi";
+}
+
+export interface MyFarmProfile {
+    id: number;
+    farm_name: string;
+    owner_name: string;
+    address: string;
+    description: string;
+    area_ha: number | null;
+    farming_method: string;
+    status: "pending" | "approved" | "rejected";
+    cover: FarmImageItem | null;
+    certificates: FarmImageItem[];
+}

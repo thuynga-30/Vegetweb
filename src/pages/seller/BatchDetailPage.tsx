@@ -54,7 +54,8 @@ export default function BatchDetailPage() {
             setShowForm(false);
             refetchLogs();
         } catch (err: any) {
-            setError(err?.message ?? "Không thể thêm mục nhật ký, vui lòng thử lại.");
+            const m = err?.message;
+            setError(Array.isArray(m) ? m.join(", ") : m ?? "Không thể thêm mục nhật ký, vui lòng thử lại.");
         } finally {
             setSubmitting(false);
         }
@@ -88,7 +89,7 @@ export default function BatchDetailPage() {
                             <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
                                 <Info label="Gieo" value={formatDate(batch.planting_date)} />
                                 <Info label="Thu hoạch" value={formatDate(batch.harvest_date)} />
-                                <Info label="Đã bán" value={`${batch.sold ?? 0}/${batch.quantity}kg`} />
+                                <Info label="Còn lại" value={`${batch.quantity}kg`} />
                             </div>
                         </div>
                     </div>

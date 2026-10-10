@@ -48,7 +48,7 @@ export default function OrderDetailPage() {
                 <div className="space-y-2">
                     {order.details?.map((d) => (
                         <div key={d.id} className="flex justify-between text-sm border-b last:border-0 pb-2">
-                            <span>Lô hàng #{d.batch_id} × {d.quantity}</span>
+                            <span>{d.product_name ?? `Lô hàng #${d.batch_id}`} × {d.quantity}</span>
                             <span className="font-medium">{formatCurrency(d.price * d.quantity)}</span>
                         </div>
                     ))}
@@ -58,8 +58,7 @@ export default function OrderDetailPage() {
                 </div>
             </div>
 
-            {order.status === "Delivered" && (
-                <button onClick={confirmReceived} disabled={confirming}
+            {(order.status === "Shipping" || order.status === "Delivered") && (                <button onClick={confirmReceived} disabled={confirming}
                         className="mt-5 inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-semibold">
                     <CheckCircle2 className="w-4 h-4" /> {confirming ? "Đang xác nhận..." : "Xác nhận đã nhận hàng"}
                 </button>

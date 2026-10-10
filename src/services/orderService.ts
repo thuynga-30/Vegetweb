@@ -50,14 +50,9 @@ export const orderService = {
         return response as unknown as OrderWithDetails;
     },
 
-    confirmReceived: async (
-        id: number
-    ): Promise<Order> => {
-        const response = await api.put(
-            `/orders/${id}/confirm`
-        ) as ApiResponse<Order>;
-
-        return response.data;
+    confirmReceived: async (id: number): Promise<Order> => {
+        const response = await api.put(`/orders/${id}/confirm`);
+        return response as unknown as Order;
     },
 
     getSellerOrders: async (status?: string): Promise<OrderWithDetails[]> => {

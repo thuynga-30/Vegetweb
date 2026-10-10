@@ -8,7 +8,7 @@ import { categoryService } from "@/services/categoryService";
 import { ProductCard } from "@/components/common/ProductCard";
 
 import { categoryEmoji, categoryColor } from "@/lib/utils";
-import {ScanLine,Shield,Truck,Sprout, ArrowRight,Star,MapPin,} from "lucide-react";
+import {ScanLine,Truck,Sprout, ArrowRight,MapPin,} from "lucide-react";
 
 export default function HomePage() {
     const {
@@ -46,7 +46,6 @@ export default function HomePage() {
     const totalProducts =
         productResponse?.meta?.total ?? products.length;
 
-    const highlight = products[0];
     return (
         <>
             <section className="relative overflow-hidden">
@@ -140,53 +139,14 @@ export default function HomePage() {
 
                         <img
                             src={
-                                highlight?.image ??
+
                                 "https://images.unsplash.com/photo-1542838132-92c53300491e?w=900"
                             }
                             alt={
-                                highlight?.name ??
                                 "Rau củ tươi"
                             }
                             className="rounded-3xl shadow-2xl w-full aspect-[4/5] object-cover"
                         />
-
-                        {highlight && (
-
-                            <div className="absolute -bottom-6 -left-6 bg-white text-foreground rounded-2xl p-4 shadow-xl w-56">
-
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-
-                                    <Shield className="w-3.5 h-3.5 text-primary" />
-
-                                    Xác minh nguồn gốc
-
-                                </div>
-
-                                <div className="mt-1 font-semibold line-clamp-1">
-                                    {highlight.name}
-                                </div>
-
-                                <div className="text-xs text-muted-foreground">
-                                    {highlight.farmName ??
-                                        "Nông trại đối tác"}
-                                </div>
-
-                                <div className="mt-2 flex items-center gap-0.5 text-accent">
-
-                                    {Array.from({ length: 5 }).map(
-                                        (_, i) => (
-                                            <Star
-                                                key={i}
-                                                className="w-3 h-3 fill-current"
-                                            />
-                                        )
-                                    )}
-
-                                </div>
-
-                            </div>
-
-                        )}
 
                     </div>
 

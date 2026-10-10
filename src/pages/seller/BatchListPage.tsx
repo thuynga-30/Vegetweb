@@ -25,7 +25,7 @@ export default function BatchListPage() {
                         <th className="text-left p-3">Sản phẩm</th>
                         <th className="text-left p-3">Mã lô</th>
                         <th className="text-left p-3">Ngày thu hoạch</th>
-                        <th className="text-left p-3">Số lượng</th>
+                        <th className="text-left p-3">Còn lại</th>
                         <th className="text-left p-3">Cấp độ tin cậy</th>
                         <th className="text-left p-3">Trạng thái</th>
                         <th className="text-right p-3"></th>
@@ -42,7 +42,7 @@ export default function BatchListPage() {
                             </td>
                             <td className="p-3 font-mono text-xs">{b.barcode ?? "—"}</td>
                             <td className="p-3">{formatDate(b.harvest_date)}</td>
-                            <td className="p-3">{b.sold ?? 0}/{b.quantity} kg</td>
+                            <td className="p-3">{b.quantity} kg</td>
                             <td className="p-3"><TrustBadge level={b.trust_level} size="sm" /></td>
                             <td className="p-3"><StatusBadge status={b.approval_status} /></td>
                             <td className="p-3 text-right">
@@ -53,7 +53,6 @@ export default function BatchListPage() {
                                     >
                                         <QrCode className="w-4 h-4" />
                                     </button>
-
 
                                     <Link to={`/seller/batches/${b.id}`} className="px-3 py-1 rounded bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20">
                                         Chi tiết
