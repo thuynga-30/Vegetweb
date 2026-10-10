@@ -1,11 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { batchService } from "@/services/batchService";
 import { formatDate } from "@/lib/utils";
 import { TrustBadge } from "@/components/common/TrustBadge";
 import { QRCode } from "@/components/common/QRCode";
+import { QRScannerModal } from "@/components/common/QRScannerModal";
 import { ScanLine, MapPin, CheckCircle2 } from "lucide-react";
 import type { BatchTraceData } from "@/types/batch";
+
+// Nội dung QR có thể là mã lô thuần ("GF-XLR-2026-001") hoặc một đường link có tham số ?code=...
+function extractBatchCode(raw: string): string {
+    const text = raw.trim();
+    try {
+        const url = new URL(text);
+        return url.searchParams.get("code")?.trim() || text;
+    } catch {
+        return text;
+    }
+}
 
 export default function TraceabilityPage() {
     const [params] = useSearchParams();
@@ -18,6 +30,7 @@ export default function TraceabilityPage() {
     const [data, setData] = useState<BatchTraceData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [scanning, setScanning] = useState(false);
 
     const search = async (value: string) => {
         const batchCode = value.trim();
@@ -53,15 +66,35 @@ export default function TraceabilityPage() {
         }
     };
 
+    // Mở trang bằng link có ?code=... (ví dụ quét QR bằng camera điện thoại) thì tra cứu luôn
+    useEffect(() => {
+        if (initialCode) search(initialCode);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Quét QR xong: đóng camera, điền mã vào ô nhập và tra cứu
+    const handleScan = (text: string) => {
+        setScanning(false);
+        const value = extractBatchCode(text);
+        setCode(value);
+        search(value);
+    };
+
     return (
         <div className="max-w-3xl mx-auto px-4 py-14">
 
             {/* HEADER */}
             <div className="text-center">
 
-                <div className="w-14 h-14 rounded-2xl bg-hero-gradient text-white grid place-items-center mx-auto">
+                <button
+                    type="button"
+                    onClick={() => setScanning(true)}
+                    aria-label="Quét mã QR"
+                    title="Quét mã QR"
+                    className="w-14 h-14 rounded-2xl bg-hero-gradient text-white grid place-items-center mx-auto hover:opacity-90 transition"
+                >
                     <ScanLine className="w-7 h-7" />
-                </div>
+                </button>
 
                 <h1 className="text-3xl font-bold mt-4">
                     Truy xuất nguồn gốc
@@ -269,6 +302,14 @@ export default function TraceabilityPage() {
                     )}
 
                 </div>
+            )}
+
+            {/* CAMERA QUÉT QR */}
+            {scanning && (
+                <QRScannerModal
+                    onScan={handleScan}
+                    onClose={() => setScanning(false)}
+                />
             )}
 
         </div>
