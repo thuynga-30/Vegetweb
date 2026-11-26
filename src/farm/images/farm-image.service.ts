@@ -10,7 +10,7 @@ import {
   FarmImage,
   FarmImageType,
 } from '../entities/farm-image.entity';
-import { Farm } from '../entities/farm.entity';
+import { Farm, FarmStatus } from '../entities/farm.entity';
 import { UploadService } from '../../upload/upload.service';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class FarmImageService {
     private farmRepo: Repository<Farm>,
 
     private readonly uploadService: UploadService,
-  ) {}
+  ) { }
 
   async upload(
     farmId: number,
@@ -56,7 +56,9 @@ export class FarmImageService {
       image_url: result.secure_url,
       image_type: type,
     });
-
+    const savedImage = await this.imageRepo.save(image);
+    farm.status = FarmStatus.PENDING;
+    await this.farmRepo.save(farm);
     return this.imageRepo.save(image);
   }
 
@@ -104,7 +106,17 @@ export class FarmImageService {
       );
     }
 
-    return this.imageRepo.remove(image);
+    const farm = image.farm;
+
+    await this.imageRepo.remove(image);
+
+    // Xóa ảnh trong hồ sơ cũng cần kiểm duyệt lại.
+    if (farm) {
+      farm.status = FarmStatus.PENDING;
+      await this.farmRepo.save(farm);
+    }
+
+    return { success: true, message: 'Xóa ảnh thành công' };
   }
 
   private async getFarmForSeller(

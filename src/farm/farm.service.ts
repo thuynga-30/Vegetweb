@@ -3,10 +3,15 @@ import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Farm, FarmStatus } from './entities/farm.entity';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { DataSource, FindOptionsRelations, In, Repository } from 'typeorm';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { QueryFarmDto } from './dto/query-farm.dto';
 import { FarmImageType } from './entities/farm-image.entity';
+import { Product } from 'src/products/entities/product.entity';
+import { Batch } from 'src/batch/entities/batch.entity';
+import { Order } from 'src/order/entities/order.entity';
+import { OrderDetail } from 'src/order/entities/order-detail.entity';
+import { Review } from 'src/products/entities/review.entity';
 @Injectable()
 export class FarmService {
   constructor(
@@ -14,6 +19,7 @@ export class FarmService {
     private readonly farmRepo: Repository<Farm>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly dataSource: DataSource,
   ) { }
   async findAll(query: QueryFarmDto = {}) {
     const {
@@ -271,13 +277,115 @@ export class FarmService {
   ): Promise<Farm> {
     const farm = await this.findOneBySeller(id, sellerId);
     Object.assign(farm, dto);
+    farm.status = FarmStatus.PENDING;
     return this.farmRepo.save(farm);
   }
 
+
   async removeBySeller(id: number, sellerId: number): Promise<void> {
-    const farm = await this.findOneBySeller(id, sellerId);
-    await this.farmRepo.remove(farm);
+    await this.dataSource.transaction(async (manager) => {
+      // 1. Tìm nông trại và khóa bản ghi trong transaction.
+      const farm = await manager.findOne(Farm, {
+        where: { id },
+        relations: { seller: true },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!farm) {
+        throw new NotFoundException('Không tìm thấy Farm');
+      }
+
+      this.ensureFarmOwnership(farm, sellerId);
+
+      // 2. Lấy danh sách sản phẩm thuộc nông trại.
+      const products = await manager.find(Product, {
+        where: { farm: { id: farm.id } },
+        select: { id: true },
+      });
+
+      const productIds = products.map((product) => product.id);
+
+      if (productIds.length > 0) {
+        // 3. Tìm các chi tiết đơn hàng có chứa lô hàng
+        // thuộc những sản phẩm của nông trại.
+        const affectedDetails = await manager
+          .createQueryBuilder(OrderDetail, 'detail')
+          .innerJoin('detail.batch', 'batch')
+          .innerJoin('batch.product', 'product')
+          .select('detail.id', 'detailId')
+          .addSelect('detail.order_id', 'orderId')
+          .where('product.id IN (:...productIds)', { productIds })
+          .getRawMany<{ detailId: number; orderId: number }>();
+
+        const detailIds = affectedDetails.map(
+          (detail) => Number(detail.detailId),
+        );
+
+        const affectedOrderIds = [
+          ...new Set(
+            affectedDetails.map((detail) => Number(detail.orderId)),
+          ),
+        ];
+
+        // 4. Chỉ xóa chi tiết đơn hàng thuộc nông trại này.
+        if (detailIds.length > 0) {
+          await manager.delete(OrderDetail, {
+            id: In(detailIds),
+          });
+        }
+
+        // 5. Kiểm tra và cập nhật các đơn hàng bị ảnh hưởng.
+        for (const orderId of affectedOrderIds) {
+          const remainingDetails = await manager.find(OrderDetail, {
+            where: { order: { id: orderId } },
+          });
+
+          // Không còn sản phẩm nào: xóa đơn hàng.
+          if (remainingDetails.length === 0) {
+            await manager.delete(Order, { id: orderId });
+            continue;
+          }
+
+          // Vẫn còn sản phẩm: tính lại tổng tiền.
+          const newTotal = remainingDetails.reduce(
+            (sum, detail) =>
+              sum + Number(detail.price) * Number(detail.quantity),
+            0,
+          );
+
+          await manager.update(
+            Order,
+            { id: orderId },
+            { total_price: newTotal },
+          );
+        }
+
+        // 6. Xóa các lô hàng thuộc những sản phẩm này.
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Batch)
+          .where('product_id IN (:...productIds)', { productIds })
+          .execute();
+
+        // 7. Xóa các đánh giá thuộc sản phẩm của nông trại.
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Review)
+          .where('product_id IN (:...productIds)', { productIds })
+          .execute();
+
+        // 8. Xóa sản phẩm.
+        await manager.delete(Product, {
+          id: In(productIds),
+        });
+      }
+      // 9. Cuối cùng xóa nông trại.
+      await manager.remove(Farm, farm);
+    });
   }
+
 
   async approve(id: number): Promise<Farm> {
     return this.setStatus(id, FarmStatus.APPROVED);

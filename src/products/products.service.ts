@@ -172,9 +172,11 @@ export class ProductsService {
       .andWhere('batch.quantity > 0')
       .orderBy('batch.id', 'DESC')
       .getOne();
-    const firstBatchImage = currentBatch?.images
-      ?.slice()
-      .sort((a, b) => a.id - b.id)[0];
+    const batchImages = (currentBatch?.images ?? [])
+      .slice()
+      .sort((a, b) => a.id - b.id);
+
+    const imageUrls = batchImages.map((image) => image.image_url);
     const reviewStats = await this.reviewRepo
       .createQueryBuilder('review')
       .select('AVG(review.rating)', 'avgRating')
@@ -192,7 +194,8 @@ export class ProductsService {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: firstBatchImage?.image_url ?? null,
+      image: imageUrls[0] ?? null,
+      images: imageUrls,
       farm: product.farm
         ? {
           id: product.farm.id,
@@ -249,59 +252,59 @@ export class ProductsService {
     await this.reviewRepo.save(review);
     return { message: 'Đánh giá của bạn đã được ghi nhận' };
   }
- async create(dto: CreateProductDto, sellerId?: number) {
-  let farmId = dto.farmId;
+  async create(dto: CreateProductDto, sellerId?: number) {
+    let farmId = dto.farmId;
 
-  // Không gửi farmId: dùng nông trại đã duyệt đầu tiên của seller
-  if (farmId === undefined) {
-    if (sellerId === undefined) {
-      throw new BadRequestException('Thiếu farmId');
+    // Không gửi farmId: dùng nông trại đã duyệt đầu tiên của seller
+    if (farmId === undefined) {
+      if (sellerId === undefined) {
+        throw new BadRequestException('Thiếu farmId');
+      }
+      const [myFarm] = await this.farmRepository.find({
+        where: { seller: { id: sellerId }, status: FarmStatus.APPROVED },
+        order: { id: 'ASC' },
+        take: 1,
+      });
+      if (!myFarm) {
+        throw new BadRequestException('Bạn chưa có nông trại nào được Admin duyệt');
+      }
+      farmId = myFarm.id;
     }
-    const [myFarm] = await this.farmRepository.find({
-      where: { seller: { id: sellerId }, status: FarmStatus.APPROVED },
-      order: { id: 'ASC' },
-      take: 1,
+
+    const farm = await this.farmRepository.findOne({
+      where: { id: farmId },
+      relations: { seller: true },
     });
-    if (!myFarm) {
-      throw new BadRequestException('Bạn chưa có nông trại nào được Admin duyệt');
+    if (!farm) {
+      throw new NotFoundException('Không tìm thấy nông trại');
     }
-    farmId = myFarm.id;
+
+    if (sellerId !== undefined && farm.seller?.id !== sellerId) {
+      throw new ForbiddenException('Bạn không có quyền thao tác Farm này');
+    }
+
+    // Chỉ cho tạo Product nếu Farm đã được duyệt
+    if (farm.status !== FarmStatus.APPROVED) {
+      throw new BadRequestException('Nông trại chưa được Admin duyệt');
+    }
+
+    const category = await this.categoryRepository.findOne({
+      where: { id: dto.categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException('Danh mục không tồn tại hoặc đã bị khóa');
+    }
+
+    const product = this.productRepo.create({
+      farm,
+      category,
+      name: dto.name,
+      description: dto.description,
+      price: dto.price,
+    });
+
+    return this.productRepo.save(product);
   }
-
-  const farm = await this.farmRepository.findOne({
-    where: { id: farmId },
-    relations: { seller: true },
-  });
-  if (!farm) {
-    throw new NotFoundException('Không tìm thấy nông trại');
-  }
-
-  if (sellerId !== undefined && farm.seller?.id !== sellerId) {
-    throw new ForbiddenException('Bạn không có quyền thao tác Farm này');
-  }
-
-  // Chỉ cho tạo Product nếu Farm đã được duyệt
-  if (farm.status !== FarmStatus.APPROVED) {
-    throw new BadRequestException('Nông trại chưa được Admin duyệt');
-  }
-
-  const category = await this.categoryRepository.findOne({
-    where: { id: dto.categoryId },
-  });
-  if (!category) {
-    throw new NotFoundException('Danh mục không tồn tại hoặc đã bị khóa');
-  }
-
-  const product = this.productRepo.create({
-    farm,
-    category,
-    name: dto.name,
-    description: dto.description,
-    price: dto.price,
-  });
-
-  return this.productRepo.save(product);
-}
 
 
   async findByFarm(farmId: number, sellerId?: number) {
