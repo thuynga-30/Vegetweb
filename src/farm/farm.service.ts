@@ -2,7 +2,7 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Farm, FarmStatus } from './entities/farm.entity';
+import { Farm, FarmStatus, FarmTrustLevel } from './entities/farm.entity';
 import { DataSource, FindOptionsRelations, In, Repository } from 'typeorm';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { QueryFarmDto } from './dto/query-farm.dto';
@@ -387,8 +387,16 @@ export class FarmService {
   }
 
 
-  async approve(id: number): Promise<Farm> {
-    return this.setStatus(id, FarmStatus.APPROVED);
+  async approve(
+    id: number,
+    trustLevel: FarmTrustLevel,
+  ): Promise<Farm> {
+    const farm = await this.findFarmEntity(id);
+
+    farm.trust_level = trustLevel;
+    farm.status = FarmStatus.APPROVED;
+
+    return this.farmRepo.save(farm);
   }
 
   async reject(id: number, note?: string): Promise<Farm> {
